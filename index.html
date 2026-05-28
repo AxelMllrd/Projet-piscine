@@ -50,6 +50,7 @@
             height: 40px;
             background-color: #ced4da;
             border-radius: 4px;
+            cursor: pointer;
         }
 
         .app-logo-text {
@@ -57,6 +58,7 @@
             font-size: 1.2rem;
             letter-spacing: 0.5px;
             text-transform: uppercase;
+            cursor: pointer;
         }
 
         .search-container {
@@ -98,7 +100,11 @@
             color: var(--primary-blue);
         }
 
-        /* --- Hero Banner --- */
+        /* --- Views --- */
+        .view { display: none; }
+        .view.active { display: block; }
+
+        /* --- Hero Banner (Home) --- */
         .hero-banner {
             margin: 30px 5%;
             background-color: #ced4da;
@@ -109,42 +115,9 @@
             flex-direction: column;
             align-items: center;
             gap: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
-        .hero-icon {
-            font-size: 3rem;
-            color: var(--accent-orange);
-            margin-bottom: 10px;
-        }
-
-        .hero-title {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #2c3e50;
-            margin: 0;
-            text-transform: uppercase;
-        }
-
-        .hero-subtitle {
-            font-size: 1.1rem;
-            color: #546e7a;
-            margin: 0;
-        }
-
-        /* --- Main Content --- */
-        .container {
-            padding: 20px 5%;
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            margin-bottom: 25px;
-            color: #2c3e50;
-        }
-
-        /* --- Categories --- */
+        /* --- Categories (Home) --- */
         .categories-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -168,7 +141,7 @@
             font-weight: 600;
             color: #495057;
             cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
+            transition: all 0.2s;
         }
 
         .category-card:hover {
@@ -177,81 +150,103 @@
             color: var(--primary-blue);
         }
 
-        /* --- Auctions --- */
-        .auctions-grid {
+        /* --- Catalogue Layout --- */
+        .catalogue-layout {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+            margin: 30px 5%;
+        }
+
+        /* Sidebar Filters */
+        .sidebar {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            height: fit-content;
+        }
+
+        .filter-section { margin-bottom: 25px; }
+        .filter-title { font-weight: 700; margin-bottom: 15px; font-size: 1rem; }
+        
+        .filter-group { display: flex; flex-direction: column; gap: 10px; }
+        .filter-item { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; }
+        .filter-item input { cursor: pointer; }
+
+        .price-inputs { display: flex; gap: 10px; align-items: center; }
+        .price-inputs input { width: 60px; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
+
+        /* Catalogue Header */
+        .catalogue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .results-count { font-size: 0.9rem; color: var(--text-muted); }
+        .sort-select { padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; }
+
+        /* Grid & Cards */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
 
-        .auction-card {
-            background-color: var(--white);
+        .product-card {
+            background: white;
             border-radius: 8px;
-            overflow: hidden;
             border: 1px solid var(--border-color);
+            overflow: hidden;
             transition: box-shadow 0.3s;
         }
 
-        .auction-card:hover {
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
+        .product-card:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
 
-        .item-img-placeholder {
-            height: 180px;
-            background-color: #ced4da;
-        }
+        .item-img-placeholder { height: 180px; background-color: #ced4da; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #adb5bd; }
 
-        .item-info {
-            padding: 15px;
+        .item-info { padding: 15px; position: relative; }
+        .line-placeholder { height: 10px; background-color: #dee2e6; border-radius: 5px; margin-bottom: 10px; width: 85%; }
+        .line-placeholder.short { width: 45%; }
+
+        .card-icons { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; color: #adb5bd; font-size: 0.8rem; }
+
+        /* Pagination */
+        .pagination {
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-            position: relative;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 40px;
         }
 
-        .line-placeholder {
-            height: 10px;
-            background-color: #dee2e6;
-            border-radius: 5px;
-            width: 80%;
-        }
-
-        .line-placeholder.short {
-            width: 40%;
-        }
-
-        .hammer-icon {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            color: #adb5bd;
+        .page-btn {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
             font-size: 0.9rem;
         }
+
+        .page-btn.active { background: #ced4da; border-color: #ced4da; font-weight: bold; }
 
         /* --- Footer --- */
-        .app-footer {
-            text-align: center;
-            padding: 40px;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
+        .app-footer { text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem; }
 
-        @media (max-width: 992px) {
-            .categories-grid { grid-template-columns: repeat(2, 1fr); }
-            .auctions-grid { grid-template-columns: repeat(2, 1fr); }
-            .search-container { display: none; }
-        }
-
-        @media (max-width: 600px) {
-            .categories-grid { grid-template-columns: 1fr; }
-            .auctions-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 1200px) { .products-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 900px) { .catalogue-layout { grid-template-columns: 1fr; } .sidebar { display: none; } }
     </style>
 </head>
 <body>
 
     <header class="app-header">
-        <div class="header-left">
+        <div class="header-left" onclick="showView('home')">
             <div class="logo-box"></div>
             <div class="app-logo-text">Mercato Nova</div>
         </div>
@@ -260,67 +255,103 @@
         </div>
         <div class="header-right">
             <div class="icon-btn"><i class="fa-regular fa-bell"></i></div>
-            <div class="icon-btn"><i class="fa-solid fa-cart-shopping"></i></div>
+            <div class="icon-btn" onclick="showView('catalogue')"><i class="fa-solid fa-cart-shopping"></i></div>
             <div class="icon-btn"><i class="fa-regular fa-user"></i></div>
         </div>
     </header>
 
     <main>
-        <section class="hero-banner">
-            <div class="hero-icon">⛵</div>
-            <h1 class="hero-title">Votre Marketplace Nautique</h1>
-            <p class="hero-subtitle">Achetez, vendez, enchérissez</p>
-        </section>
+        <!-- Home View -->
+        <div id="home-view" class="view active">
+            <section class="hero-banner">
+                <div style="font-size:3rem; margin-bottom:10px;">⛵</div>
+                <h1 style="font-size:1.8rem; font-weight:800; text-transform:uppercase; margin:0;">Votre Marketplace Nautique</h1>
+                <p style="color:#546e7a; margin:0;">Achetez, vendez, enchérissez</p>
+            </section>
 
-        <div class="container">
-            <h2 class="section-title">Catégories principales</h2>
-            <div class="categories-grid">
-                <div class="category-card">Voile traditionnelle</div>
-                <div class="category-card">Planche à voile</div>
-                <div class="category-card">Kitesurf</div>
-                <div class="category-card">Accessoires</div>
-                <div class="category-card">Vêtements</div>
-                <div class="category-card">Pièces détachées</div>
+            <div style="padding: 20px 5%;">
+                <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:25px;">Catégories principales</h2>
+                <div class="categories-grid">
+                    <div class="category-card" onclick="showView('catalogue', 'Voile traditionnelle')">Voile traditionnelle</div>
+                    <div class="category-card" onclick="showView('catalogue', 'Planche à voile')">Planche à voile</div>
+                    <div class="category-card" onclick="showView('catalogue', 'Kitesurf')">Kitesurf</div>
+                    <div class="category-card" onclick="showView('catalogue', 'Accessoires')">Accessoires</div>
+                    <div class="category-card" onclick="showView('catalogue', 'Vêtements')">Vêtements</div>
+                    <div class="category-card" onclick="showView('catalogue', 'Pièces détachées')">Pièces détachées</div>
+                </div>
             </div>
+        </div>
 
-            <h2 class="section-title">Enchères se terminant bientôt</h2>
-            <div class="auctions-grid">
-                <!-- Auction Card 1 -->
-                <div class="auction-card">
-                    <div class="item-img-placeholder"></div>
-                    <div class="item-info">
-                        <div class="line-placeholder"></div>
-                        <div class="line-placeholder short"></div>
-                        <i class="fa-solid fa-gavel hammer-icon"></i>
+        <!-- Catalogue View -->
+        <div id="catalogue-view" class="view">
+            <div class="catalogue-layout">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <div class="filter-section">
+                        <div class="filter-title">Filtres</div>
+                        <div style="font-weight:600; font-size:0.85rem; margin-bottom:10px;">Catégories</div>
+                        <div class="filter-group">
+                            <label class="filter-item"><input type="checkbox"> Voile traditionnelle</label>
+                            <label class="filter-item"><input type="checkbox"> Planche à voile</label>
+                            <label class="filter-item"><input type="checkbox"> Kitesurf</label>
+                        </div>
                     </div>
-                </div>
-                <!-- Auction Card 2 -->
-                <div class="auction-card">
-                    <div class="item-img-placeholder"></div>
-                    <div class="item-info">
-                        <div class="line-placeholder"></div>
-                        <div class="line-placeholder short"></div>
-                        <i class="fa-solid fa-gavel hammer-icon"></i>
+
+                    <div class="filter-section">
+                        <div style="font-weight:600; font-size:0.85rem; margin-bottom:10px;">Type de vente</div>
+                        <div class="filter-group">
+                            <label class="filter-item"><input type="checkbox"> Achat immédiat</label>
+                            <label class="filter-item"><input type="checkbox"> Enchère</label>
+                            <label class="filter-item"><input type="checkbox"> Négociation</label>
+                        </div>
                     </div>
-                </div>
-                <!-- Auction Card 3 -->
-                <div class="auction-card">
-                    <div class="item-img-placeholder"></div>
-                    <div class="item-info">
-                        <div class="line-placeholder"></div>
-                        <div class="line-placeholder short"></div>
-                        <i class="fa-solid fa-gavel hammer-icon"></i>
+
+                    <div class="filter-section">
+                        <div style="font-weight:600; font-size:0.85rem; margin-bottom:10px;">Prix (€)</div>
+                        <div class="price-inputs">
+                            <input type="text" placeholder="Min">
+                            <span>-</span>
+                            <input type="text" placeholder="Max">
+                        </div>
                     </div>
-                </div>
-                <!-- Auction Card 4 -->
-                <div class="auction-card">
-                    <div class="item-img-placeholder"></div>
-                    <div class="item-info">
-                        <div class="line-placeholder"></div>
-                        <div class="line-placeholder short"></div>
-                        <i class="fa-solid fa-gavel hammer-icon"></i>
+
+                    <div class="filter-section" style="border-top:1px solid #eee; padding-top:20px;">
+                        <div style="font-weight:600; font-size:0.85rem; margin-bottom:10px;">État</div>
+                        <div class="filter-group">
+                            <label class="filter-item"><input type="checkbox"> Neuf</label>
+                            <label class="filter-item"><input type="checkbox"> Très bon</label>
+                            <label class="filter-item"><input type="checkbox"> Bon</label>
+                            <label class="filter-item"><input type="checkbox"> Occasion</label>
+                        </div>
                     </div>
-                </div>
+                </aside>
+
+                <!-- Main Content -->
+                <section>
+                    <div class="catalogue-header">
+                        <div class="results-count" id="results-count">248 produits trouvés</div>
+                        <div>
+                            <span style="font-size:0.85rem; color:var(--text-muted);">Trier par :</span>
+                            <select class="sort-select">
+                                <option>Pertinence</option>
+                                <option>Prix croissant</option>
+                                <option>Prix décroissant</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="products-grid" id="products-grid">
+                        <!-- Cards will be injected here -->
+                    </div>
+
+                    <div class="pagination">
+                        <div class="page-btn active">1</div>
+                        <div class="page-btn">2</div>
+                        <div class="page-btn">3</div>
+                        <div class="page-btn">4</div>
+                        <div class="page-btn">></div>
+                    </div>
+                </section>
             </div>
         </div>
     </main>
@@ -329,5 +360,46 @@
         <p>&copy; 2026 Mercato Nova - Passion Voile & Nautisme</p>
     </footer>
 
+    <script>
+        function showView(viewId, category = null) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId + '-view').classList.add('active');
+            
+            if (viewId === 'catalogue') {
+                renderCatalogue(category);
+            }
+            window.scrollTo(0, 0);
+        }
+
+        function renderCatalogue(selectedCategory) {
+            const grid = document.getElementById('products-grid');
+            const countText = document.getElementById('results-count');
+            
+            // Simulation de données basées sur la catégorie
+            const count = selectedCategory ? 12 : 248;
+            countText.innerText = `${count} produits trouvés pour "${selectedCategory || 'Tout le catalogue'}"`;
+
+            let html = '';
+            for (let i = 0; i < 12; i++) {
+                const randomIcon = ['fa-gavel', 'fa-cart-shopping', 'fa-comments'][i % 3];
+                html += `
+                    <div class="product-card">
+                        <div class="item-img-placeholder"><i class="fa-solid fa-box-open"></i></div>
+                        <div class="item-info">
+                            <div class="line-placeholder"></div>
+                            <div class="line-placeholder short"></div>
+                            <div class="card-icons">
+                                <i class="fa-solid ${randomIcon}"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            grid.innerHTML = html;
+        }
+
+        // Initialisation
+        renderCatalogue();
+    </script>
 </body>
 </html>
