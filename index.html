@@ -19,6 +19,8 @@
             --accent-gold: #f1c40f;
             --accent-orange: #f39c12;
             --buy-blue: #3b82f6;
+            --success-green: #2ecc71;
+            --danger-red: #e74c3c;
         }
 
         body {
@@ -63,107 +65,69 @@
         .view { display: none; }
         .view.active { display: block; }
 
-        /* --- Home Page Specifics --- */
-        .hero-banner {
-            margin: 30px 5%;
-            background-color: #ced4da;
-            border-radius: 12px;
-            padding: 60px 20px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .categories-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin: 20px 5% 60px 5%;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-        }
-
-        .category-card {
-            background-color: var(--card-bg);
-            height: 120px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 15px;
-            font-weight: 600;
-            color: #495057;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
+        /* --- Home View --- */
+        .hero-banner { margin: 30px 5%; background-color: #ced4da; border-radius: 12px; padding: 60px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .categories-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 5% 60px 5%; background: white; padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .category-card { background-color: var(--card-bg); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; font-weight: 600; color: #495057; cursor: pointer; transition: all 0.2s; }
         .category-card:hover { transform: translateY(-5px); background-color: #dee2e6; color: var(--primary-blue); }
 
         /* --- Catalogue Layout --- */
-        .catalogue-layout {
-            display: grid;
-            grid-template-columns: 280px 1fr;
-            gap: 30px;
-            margin: 30px 5%;
-        }
-
+        .catalogue-layout { display: grid; grid-template-columns: 280px 1fr; gap: 30px; margin: 30px 5%; }
         .sidebar { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); height: fit-content; }
-        .filter-section { margin-bottom: 25px; }
-        .filter-title { font-weight: 700; margin-bottom: 15px; font-size: 1.1rem; }
-        .filter-group { display: flex; flex-direction: column; gap: 10px; }
-        .filter-item { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--text-muted); cursor: pointer; }
-
         .products-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
         .product-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; cursor: pointer; transition: all 0.3s; }
         .product-card:hover { box-shadow: 0 10px 20px rgba(0,0,0,0.05); transform: translateY(-5px); }
         .item-img-placeholder { height: 180px; background-color: #ced4da; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #adb5bd; }
         .item-info { padding: 15px; position: relative; }
-        .line-placeholder { height: 10px; background-color: #dee2e6; border-radius: 5px; margin-bottom: 10px; width: 85%; }
-        .line-placeholder.short { width: 45%; }
         .card-icons { position: absolute; bottom: 15px; right: 15px; color: #adb5bd; font-size: 0.9rem; }
 
         /* --- Detail Layout --- */
         .detail-view-container { margin: 30px 5%; }
         .detail-layout { display: grid; grid-template-columns: 1fr 380px; gap: 40px; }
-        
         .gallery-container { margin-bottom: 30px; }
         .main-img-placeholder { height: 450px; background: #ced4da; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 4rem; color: #adb5bd; }
         .thumb-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 15px; }
         .thumb-placeholder { height: 80px; background: #dee2e6; border-radius: 4px; }
-
-        .info-panel { display: flex; flex-direction: column; gap: 20px; }
         
-        /* Auction Panel Specifics */
+        /* Action Panels */
         .auction-panel { border: 2px solid var(--accent-gold); border-radius: 12px; padding: 25px; background: white; text-align: center; }
+        .buy-panel { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); }
         .timer-box { font-size: 2rem; font-weight: 800; color: #2c3e50; margin: 10px 0; }
         .price-box { background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #eee; margin: 20px 0; text-align: left; }
         .current-price { font-size: 2.5rem; font-weight: 900; color: var(--primary-blue); display: block; }
+        .btn-action { padding: 15px; border-radius: 8px; border: none; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s; width: 100%; margin-bottom: 10px; }
+        .btn-bid { background: var(--accent-orange); color: white; }
+        .btn-buy { background: var(--buy-blue); color: white; }
+        .btn-cart { background: white; color: var(--buy-blue); border: 1px solid var(--buy-blue); }
+
+        /* --- Negotiation View Specifics --- */
+        .nego-layout { display: grid; grid-template-columns: 320px 1fr; gap: 40px; margin: 30px 5%; }
+        .nego-summary { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; height: fit-content; }
+        .nego-main { background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 30px; }
         
-        .btn-action { padding: 15px; border-radius: 8px; border: none; font-weight: 800; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s; }
-        .btn-bid { background: var(--accent-orange); color: white; width: 100%; }
-        .btn-buy { background: var(--buy-blue); color: white; width: 100%; }
-        .btn-cart { background: white; color: var(--buy-blue); border: 1px solid var(--buy-blue); width: 100%; }
-
-        /* Buy Panel Specifics */
-        .buy-panel { background: white; padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); }
-
-        /* History Table */
-        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
-        .user-circle { width: 35px; height: 35px; background: #eee; border-radius: 50%; display: inline-block; margin-right: 12px; vertical-align: middle; }
+        .nego-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .status-badge { background: #e8f5e9; color: var(--success-green); padding: 5px 15px; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+        
+        .timeline { position: relative; padding-left: 50px; }
+        .timeline::before { content: ''; position: absolute; left: 19px; top: 0; bottom: 0; width: 2px; background: #eee; }
+        
+        .timeline-item { position: relative; margin-bottom: 30px; background: #f8f9fa; padding: 20px; border-radius: 12px; border: 1px solid #eee; }
+        .timeline-item.buyer { background: #e3f2fd; border-color: #bbdefb; }
+        .avatar { position: absolute; left: -50px; width: 40px; height: 40px; border-radius: 50%; background: var(--primary-blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 1; }
+        .avatar.seller { background: #546e7a; }
+        
+        .nego-price { font-size: 1.8rem; font-weight: 800; color: var(--primary-blue); margin: 5px 0; }
+        .nego-meta { font-size: 0.75rem; color: #888; display: flex; justify-content: space-between; }
+        
+        .reply-box { margin-top: 40px; padding: 30px; border-top: 1px solid #eee; }
+        .reply-actions { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .btn-nego { padding: 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn-accept { background: var(--success-green); color: white; }
+        .btn-counter { background: white; border: 1px solid #ccc; }
+        .btn-refuse { background: #fff5f5; color: var(--danger-red); border: 1px solid #ffdada; }
 
         /* Footer */
         .app-footer { text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem; }
-
-        @media (max-width: 1024px) {
-            .detail-layout { grid-template-columns: 1fr; }
-            .catalogue-layout { grid-template-columns: 1fr; }
-            .sidebar { display: none; }
-        }
     </style>
 </head>
 <body>
@@ -197,17 +161,13 @@
                 <h1 style="font-size:1.8rem; font-weight:800; text-transform:uppercase; margin:0;">Votre Marketplace Nautique</h1>
                 <p style="color:#546e7a; margin:0;">Achetez, vendez, enchérissez</p>
             </section>
-
-            <div style="padding: 20px 5%;">
-                <h2 style="font-size:1.3rem; font-weight:700; margin-bottom:25px;">Catégories principales</h2>
-                <div class="categories-grid">
-                    <div class="category-card" onclick="showView('catalogue', 'Voile traditionnelle')">Voile traditionnelle</div>
-                    <div class="category-card" onclick="showView('catalogue', 'Planche à voile')">Planche à voile</div>
-                    <div class="category-card" onclick="showView('catalogue', 'Kitesurf')">Kitesurf</div>
-                    <div class="category-card" onclick="showView('catalogue', 'Accessoires')">Accessoires</div>
-                    <div class="category-card" onclick="showView('catalogue', 'Vêtements')">Vêtements</div>
-                    <div class="category-card" onclick="showView('catalogue', 'Pièces détachées')">Pièces détachées</div>
-                </div>
+            <div class="categories-grid">
+                <div class="category-card" onclick="showView('catalogue', 'Voile traditionnelle')">Voile traditionnelle</div>
+                <div class="category-card" onclick="showView('catalogue', 'Planche à voile')">Planche à voile</div>
+                <div class="category-card" onclick="showView('catalogue', 'Kitesurf')">Kitesurf</div>
+                <div class="category-card" onclick="showView('catalogue', 'Accessoires')">Accessoires</div>
+                <div class="category-card" onclick="showView('catalogue', 'Vêtements')">Vêtements</div>
+                <div class="category-card" onclick="showView('catalogue', 'Pièces détachées')">Pièces détachées</div>
             </div>
         </div>
 
@@ -215,36 +175,20 @@
         <div id="catalogue-view" class="view">
             <div class="catalogue-layout">
                 <aside class="sidebar">
-                    <div class="filter-section">
-                        <div class="filter-title">Filtres</div>
-                        <div style="font-weight:600; font-size:0.85rem; margin-bottom:10px;">Catégories</div>
-                        <div class="filter-group">
-                            <label class="filter-item"><input type="checkbox"> Voile traditionnelle</label>
-                            <label class="filter-item"><input type="checkbox"> Planche à voile</label>
-                            <label class="filter-item"><input type="checkbox"> Kitesurf</label>
-                        </div>
-                    </div>
-                    <div class="filter-section">
-                        <div style="font-weight:600; font-size:0.85rem; margin-bottom:10px;">Type de vente</div>
-                        <div class="filter-group">
-                            <label class="filter-item"><input type="checkbox"> Achat immédiat</label>
-                            <label class="filter-item"><input type="checkbox"> Enchère</label>
-                            <label class="filter-item"><input type="checkbox"> Négociation</label>
-                        </div>
+                    <div class="filter-title">Filtres</div>
+                    <div style="font-weight:600; font-size:0.85rem; margin-bottom:10px;">Catégories</div>
+                    <div class="filter-group">
+                        <label class="filter-item"><input type="checkbox"> Voile traditionnelle</label>
+                        <label class="filter-item"><input type="checkbox"> Planche à voile</label>
+                        <label class="filter-item"><input type="checkbox"> Kitesurf</label>
                     </div>
                 </aside>
-
                 <section>
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                         <div style="font-size:0.9rem; color:var(--text-muted);" id="results-count">248 produits trouvés</div>
-                        <select style="padding:8px; border:1px solid var(--border-color); border-radius:4px; font-size:0.9rem;">
-                            <option>Pertinence</option>
-                            <option>Prix croissant</option>
-                        </select>
+                        <select style="padding:8px; border:1px solid var(--border-color); border-radius:4px; font-size:0.9rem;"><option>Pertinence</option></select>
                     </div>
-                    <div class="products-grid" id="products-grid">
-                        <!-- Cards injected via JS -->
-                    </div>
+                    <div class="products-grid" id="products-grid"></div>
                 </section>
             </div>
         </div>
@@ -253,93 +197,108 @@
         <div id="detail-view" class="view">
             <div class="detail-view-container">
                 <div class="detail-layout">
-                    <!-- Left Column -->
                     <div>
                         <div class="gallery-container">
-                            <div class="main-img-placeholder" id="detail-icon-placeholder"><i class="fa-solid fa-gavel"></i></div>
+                            <div class="main-img-placeholder" id="detail-icon-placeholder">📦</div>
                             <div class="thumb-grid">
-                                <div class="thumb-placeholder"></div>
-                                <div class="thumb-placeholder"></div>
-                                <div class="thumb-placeholder"></div>
-                                <div class="thumb-placeholder"></div>
+                                <div class="thumb-placeholder"></div><div class="thumb-placeholder"></div><div class="thumb-placeholder"></div><div class="thumb-placeholder"></div>
                             </div>
                         </div>
-                        
-                        <div id="detail-desc-section">
-                            <h3 style="border-bottom: 2px solid #eee; padding-bottom:10px;">Description</h3>
-                            <div style="color:var(--text-muted); line-height:1.6; padding:10px 0;">
-                                <div style="height:10px; background:#eee; width:100%; margin-bottom:10px; border-radius:5px;"></div>
-                                <div style="height:10px; background:#eee; width:100%; margin-bottom:10px; border-radius:5px;"></div>
-                                <div style="height:10px; background:#eee; width:80%; border-radius:5px;"></div>
-                            </div>
+                        <h3>Description</h3>
+                        <div style="color:var(--text-muted); line-height:1.6; padding:10px 0;">
+                            <div style="height:10px; background:#eee; width:100%; margin-bottom:10px; border-radius:5px;"></div>
+                            <div style="height:10px; background:#eee; width:100%; margin-bottom:10px; border-radius:5px;"></div>
+                            <div style="height:10px; background:#eee; width:80%; border-radius:5px;"></div>
                         </div>
-
-                        <!-- Auction History -->
-                        <div id="auction-history" style="margin-top:40px;">
-                            <h3 style="border-bottom: 2px solid #eee; padding-bottom:10px;">Historique des enchères</h3>
-                            <div class="history-item">
-                                <span><div class="user-circle"></div> User***1</span>
-                                <strong>400 €</strong>
-                                <span style="color:#888; font-size:0.8rem;">Il y a 2h</span>
-                            </div>
-                            <div class="history-item">
-                                <span><div class="user-circle"></div> User***2</span>
-                                <strong>380 €</strong>
-                                <span style="color:#888; font-size:0.8rem;">Il y a 4h</span>
-                            </div>
-                        </div>
-
-                        <!-- Technical Specs -->
-                        <div id="technical-specs" style="margin-top:40px;">
-                            <h3 style="border-bottom: 2px solid #eee; padding-bottom:10px;">Caractéristiques techniques</h3>
+                        <div id="specs-section">
+                            <h3>Caractéristiques techniques</h3>
                             <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px;">
-                                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:8px;">
-                                    <span style="color:var(--text-muted);">Surface:</span> <strong>6.5 m²</strong>
-                                </div>
-                                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:8px;">
-                                    <span style="color:var(--text-muted);">Longueur:</span> <strong>240 cm</strong>
-                                </div>
+                                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:8px;"><span>Surface:</span> <strong>6.5 m²</strong></div>
+                                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:8px;"><span>Longueur:</span> <strong>240 cm</strong></div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Right Column (Action Panels) -->
                     <div class="info-panel">
-                        <!-- Auction Action Box -->
                         <div id="auction-action-panel" class="auction-panel">
                             <i class="fa-solid fa-gavel" style="font-size:2rem; color:var(--accent-gold);"></i>
                             <p style="text-transform:uppercase; font-weight:bold; margin:15px 0 5px 0;">Enchère en cours</p>
-                            <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Se termine dans</p>
                             <div class="timer-box">02:15:43</div>
                             <div class="price-box">
                                 <span style="font-size:0.85rem; color:var(--text-muted);">Prix actuel</span>
                                 <span class="current-price" id="auction-price-display">390 €</span>
-                                <span style="font-size:0.75rem; color:var(--text-muted);">Enchère minimale: 395 €</span>
                             </div>
-                            <input type="number" style="width:100%; padding:15px; border-radius:8px; border:1px solid #ccc; margin-bottom:15px; box-sizing:border-box;" placeholder="Montant en €">
                             <button class="btn-action btn-bid">Placer une enchère</button>
-                            <div style="display:flex; gap:10px; margin-top:15px;">
-                                <button style="flex:1; padding:10px; border:1px solid #ddd; background:white; border-radius:4px; font-size:0.8rem;">+ 5 €</button>
-                                <button style="flex:1; padding:10px; border:1px solid #ddd; background:white; border-radius:4px; font-size:0.8rem;">+ 10 €</button>
-                            </div>
                         </div>
-
-                        <!-- Buy Action Box -->
                         <div id="buy-action-panel" class="buy-panel">
-                            <h2 id="buy-item-name" style="margin:0 0 10px 0;">Voile Vintage</h2>
-                            <div style="margin-bottom:20px; color:var(--accent-gold);">★★★★☆ <span style="color:var(--text-muted); font-size:0.8rem;">(12 avis)</span></div>
+                            <h2 id="buy-item-name">Produit</h2>
                             <div style="background:#f8f9fa; padding:20px; border-radius:8px; margin-bottom:20px;">
                                 <p style="font-size:0.85rem; color:var(--text-muted); margin:0;">Prix</p>
                                 <p style="font-size:2.2rem; font-weight:800; margin:5px 0;" id="buy-price-display">850 €</p>
-                                <p style="font-size:0.9rem; margin:10px 0 0 0;">État: <strong>Très bon</strong></p>
-                                <p style="font-size:0.9rem; margin:5px 0 0 0;">Vendeur: <strong>VoileDor 🌟 4.9</strong></p>
+                                <p style="font-size:0.9rem; margin:10px 0 0 0;">Vendeur: <strong>WingPro 🌟 4.7</strong></p>
                             </div>
-                            <button class="btn-action btn-buy" style="margin-bottom:10px;">Acheter maintenant</button>
+                            <button class="btn-action btn-buy">Acheter maintenant</button>
                             <button class="btn-action btn-cart">Ajouter au panier</button>
-                            <button style="background:none; border:none; color:var(--text-muted); cursor:pointer; width:100%; margin-top:15px; font-size:0.9rem;"><i class="fa-regular fa-comments"></i> Proposer un prix</button>
+                            <button onclick="showView('negotiation')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; width:100%; margin-top:15px; font-size:0.9rem;"><i class="fa-regular fa-comments"></i> Proposer un prix</button>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Negotiation View -->
+        <div id="negotiation-view" class="view">
+            <div class="nego-layout">
+                <aside class="nego-summary">
+                    <div style="height:200px; background:#ced4da; border-radius:8px; margin-bottom:20px;"></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Prix initial:</span> <strong>1 200 €</strong></div>
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>État:</span> <strong>Très bon</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span>Vendeur:</span> <strong>WingPro 🌟 4.7</strong></div>
+                </aside>
+                
+                <section class="nego-main">
+                    <div class="nego-header">
+                        <div>
+                            <h2 style="margin:0;">Négociation en cours</h2>
+                            <p style="color:#888; font-size:0.85rem; margin:5px 0 0 0;">Échange 3 sur 5 maximum</p>
+                        </div>
+                        <span class="status-badge">Active</span>
+                    </div>
+
+                    <div class="timeline">
+                        <!-- Message 1 -->
+                        <div class="timeline-item buyer">
+                            <div class="avatar">V</div>
+                            <div class="nego-meta"><span>Vous avez proposé</span> <span>Il y a 2 jours</span></div>
+                            <div class="nego-price">1 000 €</div>
+                            <div style="font-size:0.9rem; color:var(--text-muted);">Proposition initiale</div>
+                        </div>
+                        <!-- Message 2 -->
+                        <div class="timeline-item">
+                            <div class="avatar seller">W</div>
+                            <div class="nego-meta"><span>WingPro a contré</span> <span>Il y a 1 jour</span></div>
+                            <div class="nego-price">1 150 €</div>
+                            <div style="font-size:0.9rem; color:var(--text-muted);">"La planche est en excellent état avec housse incluse"</div>
+                        </div>
+                        <!-- Message 3 -->
+                        <div class="timeline-item buyer">
+                            <div class="avatar">V</div>
+                            <div class="nego-meta"><span>Vous avez proposé</span> <span>Il y a 3 heures</span></div>
+                            <div class="nego-price">1 100 €</div>
+                            <div style="font-size:0.9rem; color:var(--text-muted);">"Prix final avec livraison incluse ?"</div>
+                        </div>
+                    </div>
+
+                    <div class="reply-box">
+                        <h3 style="margin-top:0;">Votre réponse (en attente du vendeur)</h3>
+                        <textarea style="width:100%; height:80px; padding:15px; border-radius:8px; border:1px solid #ddd; background:#f8f9fa; box-sizing:border-box;" placeholder="Message optionnel"></textarea>
+                        <div class="reply-actions">
+                            <button class="btn-nego btn-accept">Accepter (1 100 €)</button>
+                            <button class="btn-nego btn-counter">Contre-offre</button>
+                            <button class="btn-nego btn-refuse">Refuser</button>
+                        </div>
+                        <p style="text-align:center; font-size:0.75rem; color:#888; margin-top:15px;">Temps restant pour répondre: 68h 45min</p>
+                    </div>
+                </section>
             </div>
         </div>
     </main>
@@ -351,17 +310,11 @@
     <script>
         const products = [
             { id: 1, name: 'Voile Vintage Collector', price: 390, type: 'auction', icon: 'fa-gavel' },
-            { id: 2, name: 'Planche à voile Pro', price: 850, type: 'buy', icon: 'fa-box-open' },
+            { id: 2, name: 'Planche wingfoil Duotone', price: 850, type: 'buy', icon: 'fa-box-open' },
             { id: 3, name: 'Kite Surf North Reach', price: 620, type: 'auction', icon: 'fa-gavel' },
             { id: 4, name: 'Aileron Carbone', price: 120, type: 'buy', icon: 'fa-box-open' },
             { id: 5, name: 'Combinaison Néoprène', price: 180, type: 'buy', icon: 'fa-box-open' },
-            { id: 6, name: 'Mât Carbone 400', price: 310, type: 'auction', icon: 'fa-gavel' },
-            { id: 7, name: 'Wing Foil Fanatic', price: 750, type: 'buy', icon: 'fa-box-open' },
-            { id: 8, name: 'Pompe Haute Pression', price: 45, type: 'buy', icon: 'fa-box-open' },
-            { id: 9, name: 'Harnais Windsurf', price: 90, type: 'auction', icon: 'fa-gavel' },
-            { id: 10, name: 'Leash Téléphonique', price: 25, type: 'buy', icon: 'fa-box-open' },
-            { id: 11, name: 'Planche de Surf 6.0', price: 420, type: 'buy', icon: 'fa-box-open' },
-            { id: 12, name: 'Gilet de sauvetage', price: 55, type: 'auction', icon: 'fa-gavel' }
+            { id: 6, name: 'Mât Carbone 400', price: 310, type: 'auction', icon: 'fa-gavel' }
         ];
 
         function showView(viewId, category = null) {
@@ -373,29 +326,33 @@
                 bc.classList.remove('active');
             } else {
                 bc.classList.add('active');
-                document.getElementById('bc-cat').innerText = category || 'Catalogue';
-                document.getElementById('bc-prod').style.display = (viewId === 'detail') ? 'inline' : 'none';
-                if (viewId === 'catalogue') renderCatalogue(category);
+                if (viewId === 'catalogue') {
+                    document.getElementById('bc-cat').innerText = category || 'Catalogue';
+                    document.getElementById('bc-prod').style.display = 'none';
+                    renderCatalogue(category);
+                } else if (viewId === 'detail') {
+                    document.getElementById('bc-prod').style.display = 'inline';
+                } else if (viewId === 'negotiation') {
+                    document.getElementById('bc-cat').innerText = 'Mes négociations';
+                    document.getElementById('bc-prod').innerText = 'Planche wingfoil Duotone';
+                    document.getElementById('bc-prod').style.display = 'inline';
+                }
             }
             window.scrollTo(0, 0);
         }
 
         function renderCatalogue(category) {
             const grid = document.getElementById('products-grid');
-            const count = document.getElementById('results-count');
             grid.innerHTML = products.map(p => `
                 <div class="product-card" onclick="showDetail(${p.id})">
                     <div class="item-img-placeholder"><i class="fa-solid ${p.icon}"></i></div>
                     <div class="item-info">
                         <div style="font-weight:700; margin-bottom:5px;">${p.name}</div>
                         <div style="color:var(--primary-blue); font-weight:800;">${p.price} €</div>
-                        <div class="card-icons">
-                            <i class="fa-solid ${p.type==='auction'?'fa-gavel':'fa-cart-shopping'}"></i>
-                        </div>
+                        <div class="card-icons"><i class="fa-solid ${p.type==='auction'?'fa-gavel':'fa-cart-shopping'}"></i></div>
                     </div>
                 </div>
             `).join('');
-            count.innerText = `${products.length} produits trouvés pour "${category || 'Tout le catalogue'}"`;
         }
 
         function showDetail(id) {
@@ -403,24 +360,18 @@
             showView('detail');
             document.getElementById('bc-prod').innerText = product.name;
             document.getElementById('detail-icon-placeholder').innerHTML = `<i class="fa-solid ${product.icon}"></i>`;
-
             if (product.type === 'auction') {
                 document.getElementById('auction-action-panel').style.display = 'block';
-                document.getElementById('auction-history').style.display = 'block';
                 document.getElementById('buy-action-panel').style.display = 'none';
-                document.getElementById('technical-specs').style.display = 'none';
                 document.getElementById('auction-price-display').innerText = product.price + " €";
             } else {
                 document.getElementById('auction-action-panel').style.display = 'none';
-                document.getElementById('auction-history').style.display = 'none';
                 document.getElementById('buy-action-panel').style.display = 'block';
-                document.getElementById('technical-specs').style.display = 'block';
                 document.getElementById('buy-item-name').innerText = product.name;
                 document.getElementById('buy-price-display').innerText = product.price + " €";
             }
         }
 
-        // Initial view
         showView('home');
     </script>
 </body>
