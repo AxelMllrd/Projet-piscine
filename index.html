@@ -3,263 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mercato Nova - Spécialiste Voile Légère</title>
+    <title>Mercato Nova - Votre Marketplace Nautique</title>
+    <!-- FontAwesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Charte graphique Mercato Nova - Thème Marine & Nautisme */
         :root {
             --primary-blue: #004a7c;
             --secondary-blue: #0074b7;
-            --light-blue: #e1f5fe;
-            --accent-orange: #ff6f00;
-            --sand: #f4e1d2;
-            --foam: #f8fbff;
-            --dark-grey: #2c3e50;
+            --bg-light: #f0f2f5;
             --white: #ffffff;
-            --success: #2e7d32;
-            --error: #d32f2f;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --border-color: #e0e0e0;
+            --card-bg: #e9ecef;
         }
 
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--foam);
-            color: var(--dark-grey);
-            background-image: radial-gradient(var(--light-blue) 0.5px, transparent 0.5px);
-            background-size: 20px 20px;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-main);
         }
 
-        /* Header */
+        /* --- Header --- */
         .app-header {
-            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
-            color: var(--white);
-            padding: 2rem 1rem;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0, 74, 124, 0.2);
-            border-bottom: 5px solid var(--accent-orange);
+            background-color: var(--white);
+            padding: 10px 5%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
 
-        .app-logo {
-            font-size: 2.5rem;
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-box {
+            width: 40px;
+            height: 40px;
+            background-color: #ced4da;
+            border-radius: 4px;
+        }
+
+        .app-logo-text {
+            font-weight: 700;
+            font-size: 1.2rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .search-container {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 40px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--white);
+            font-size: 0.9rem;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+        }
+
+        .icon-btn {
+            background-color: #f8f9fa;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background-color: #e9ecef;
+            color: var(--primary-blue);
+        }
+
+        /* --- Hero Banner --- */
+        .hero-banner {
+            margin: 30px 5%;
+            background-color: #ced4da;
+            border-radius: 12px;
+            padding: 60px 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .hero-icon {
+            font-size: 3rem;
+            color: var(--accent-orange);
+            margin-bottom: 10px;
+        }
+
+        .hero-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #2c3e50;
             margin: 0;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: 800;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            cursor: pointer;
         }
 
-        .app-subtitle {
-            font-style: italic;
-            opacity: 0.9;
-            margin-top: 0.5rem;
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: #546e7a;
+            margin: 0;
         }
 
-        /* Main */
-        .main-content {
-            max-width: 1200px;
-            margin: 40px auto;
-            padding: 0 20px;
+        /* --- Main Content --- */
+        .container {
+            padding: 20px 5%;
         }
 
-        /* Hero */
-        .hero-section {
-            background-color: var(--sand);
-            padding: 40px;
-            border-radius: 15px;
-            margin-bottom: 40px;
-            border: 2px dashed var(--secondary-blue);
-            position: relative;
-            overflow: hidden;
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: #2c3e50;
         }
 
-        .hero-section::after {
-            content: '⚓';
-            position: absolute;
-            right: -20px;
-            bottom: -20px;
-            font-size: 150px;
-            opacity: 0.05;
-            transform: rotate(-15deg);
-        }
-
-        /* Grid & Cards */
-        .item-grid {
+        /* --- Categories --- */
+        .categories-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 30px;
-        }
-
-        .item-card {
-            background: var(--white);
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 60px;
+            background: white;
+            padding: 30px;
             border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .category-card {
+            background-color: var(--card-bg);
+            height: 120px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 15px;
+            font-weight: 600;
+            color: #495057;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            background-color: #dee2e6;
+            color: var(--primary-blue);
+        }
+
+        /* --- Auctions --- */
+        .auctions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .auction-card {
+            background-color: var(--white);
+            border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 8px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-            border: 1px solid #e0e0e0;
+            border: 1px solid var(--border-color);
+            transition: box-shadow 0.3s;
         }
 
-        .item-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 12px 25px rgba(0, 74, 124, 0.15);
+        .auction-card:hover {
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
-        .card-image {
-            height: 220px;
-            background-size: cover;
-            background-position: center;
+        .item-img-placeholder {
+            height: 180px;
+            background-color: #ced4da;
+        }
+
+        .item-info {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
             position: relative;
         }
 
-        .card-badge {
+        .line-placeholder {
+            height: 10px;
+            background-color: #dee2e6;
+            border-radius: 5px;
+            width: 80%;
+        }
+
+        .line-placeholder.short {
+            width: 40%;
+        }
+
+        .hammer-icon {
             position: absolute;
-            top: 15px;
-            left: 15px;
-            background: var(--white);
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            color: var(--primary-blue);
+            bottom: 15px;
+            right: 15px;
+            color: #adb5bd;
+            font-size: 0.9rem;
         }
 
-        .card-content {
-            padding: 20px;
-        }
-
-        .card-category {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: var(--secondary-blue);
-            font-weight: 800;
-        }
-
-        .card-title {
-            margin: 10px 0;
-            font-size: 1.25rem;
-            color: var(--primary-blue);
-        }
-
-        .card-price {
-            font-size: 1.5rem;
-            font-weight: 800;
-        }
-
-        /* Buttons */
-        .btn-marine {
-            display: block;
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            background: var(--secondary-blue);
-            color: var(--white);
-            font-weight: bold;
-            text-transform: uppercase;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-
-        .btn-marine:hover { background: var(--primary-blue); }
-        .btn-accent { background: var(--accent-orange); }
-        .btn-accent:hover { background: #e65100; }
-
-        /* Auction Page View */
-        .auction-view { display: none; }
-        .auction-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 40px; }
-        
-        .bid-box {
-            background: var(--light-blue);
-            padding: 25px;
-            border-radius: 12px;
-            border: 2px solid var(--secondary-blue);
-        }
-
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .history-table th, .history-table td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        /* Footer */
+        /* --- Footer --- */
         .app-footer {
-            margin-top: 80px;
-            padding: 40px 0;
-            background: var(--dark-grey);
-            color: var(--white);
             text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
         }
 
-        .hidden { display: none; }
+        @media (max-width: 992px) {
+            .categories-grid { grid-template-columns: repeat(2, 1fr); }
+            .auctions-grid { grid-template-columns: repeat(2, 1fr); }
+            .search-container { display: none; }
+        }
+
+        @media (max-width: 600px) {
+            .categories-grid { grid-template-columns: 1fr; }
+            .auctions-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
     <header class="app-header">
-        <h1 class="app-logo" onclick="showHome()">⚓ Mercato Nova</h1>
-        <p class="app-subtitle">Le magasinage en ligne de notre époque - Spécialiste Voile Légère</p>
+        <div class="header-left">
+            <div class="logo-box"></div>
+            <div class="app-logo-text">Mercato Nova</div>
+        </div>
+        <div class="search-container">
+            <input type="text" class="search-bar" placeholder="Rechercher du matériel nautique...">
+        </div>
+        <div class="header-right">
+            <div class="icon-btn"><i class="fa-regular fa-bell"></i></div>
+            <div class="icon-btn"><i class="fa-solid fa-cart-shopping"></i></div>
+            <div class="icon-btn"><i class="fa-regular fa-user"></i></div>
+        </div>
     </header>
 
-    <main class="main-content">
-        <!-- Home View -->
-        <div id="home-view">
-            <section class="hero-section">
-                <h2>Vagues, Vent & Passion</h2>
-                <p>Le comptoir n°1 pour votre matériel de voile légère. Trouvez la perle rare ou vendez votre équipement.</p>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px;">
-                    <span style="background:white; padding:8px 18px; border-radius:25px; border:2px solid var(--secondary-blue); color:var(--secondary-blue); font-weight:bold;">Surf</span>
-                    <span style="background:white; padding:8px 18px; border-radius:25px; border:2px solid var(--secondary-blue); color:var(--secondary-blue); font-weight:bold;">Windsurf</span>
-                    <span style="background:white; padding:8px 18px; border-radius:25px; border:2px solid var(--secondary-blue); color:var(--secondary-blue); font-weight:bold;">Wingfoil</span>
-                    <span style="background:white; padding:8px 18px; border-radius:25px; border:2px solid var(--secondary-blue); color:var(--secondary-blue); font-weight:bold;">Kitesurf</span>
-                </div>
-            </section>
+    <main>
+        <section class="hero-banner">
+            <div class="hero-icon">⛵</div>
+            <h1 class="hero-title">Votre Marketplace Nautique</h1>
+            <p class="hero-subtitle">Achetez, vendez, enchérissez</p>
+        </section>
 
-            <div class="item-grid" id="items-container">
-                <!-- Articles générés par JS -->
+        <div class="container">
+            <h2 class="section-title">Catégories principales</h2>
+            <div class="categories-grid">
+                <div class="category-card">Voile traditionnelle</div>
+                <div class="category-card">Planche à voile</div>
+                <div class="category-card">Kitesurf</div>
+                <div class="category-card">Accessoires</div>
+                <div class="category-card">Vêtements</div>
+                <div class="category-card">Pièces détachées</div>
             </div>
-        </div>
 
-        <!-- Auction View -->
-        <div id="auction-view" class="hidden">
-            <button onclick="showHome()" style="background:none; border:none; color:var(--secondary-blue); cursor:pointer; font-weight:bold; margin-bottom:20px;">⚓ Retour au catalogue</button>
-            <div class="auction-container">
-                <div>
-                    <h2 id="auction-title" style="color:var(--primary-blue)"></h2>
-                    <div class="bid-box">
-                        <p style="text-transform:uppercase; font-size:0.8rem; font-weight:bold; margin:0;">Enchère actuelle</p>
-                        <p id="current-bid-display" style="font-size:3rem; font-weight:900; color:var(--primary-blue); margin:10px 0;"></p>
-                        <div style="background:var(--sand); padding:10px; border-radius:8px; font-weight:bold; margin-bottom:20px;">⏱️ Temps restant : 2 jours 4 heures</div>
-                        
-                        <label style="display:block; margin-bottom:10px; font-weight:bold;">Placer une offre (€)</label>
-                        <div style="display:flex; gap:10px;">
-                            <input type="number" id="bid-input" style="flex:1; padding:15px; border-radius:8px; border:1px solid #ccc; font-size:1.1rem;">
-                            <button onclick="placeBid()" class="btn-marine btn-accent" style="width:auto; padding:0 30px; margin:0;">Enchérir</button>
-                        </div>
-                        <p id="bid-message" style="margin-top:10px; font-weight:bold;"></p>
+            <h2 class="section-title">Enchères se terminant bientôt</h2>
+            <div class="auctions-grid">
+                <!-- Auction Card 1 -->
+                <div class="auction-card">
+                    <div class="item-img-placeholder"></div>
+                    <div class="item-info">
+                        <div class="line-placeholder"></div>
+                        <div class="line-placeholder short"></div>
+                        <i class="fa-solid fa-gavel hammer-icon"></i>
                     </div>
                 </div>
-                <div>
-                    <h3 style="color:var(--primary-blue)">📜 Historique des offres</h3>
-                    <table class="history-table">
-                        <thead>
-                            <tr style="background:var(--light-blue)">
-                                <th>Utilisateur</th>
-                                <th>Montant</th>
-                                <th>Heure</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bid-history">
-                            <!-- Historique généré par JS -->
-                        </tbody>
-                    </table>
+                <!-- Auction Card 2 -->
+                <div class="auction-card">
+                    <div class="item-img-placeholder"></div>
+                    <div class="item-info">
+                        <div class="line-placeholder"></div>
+                        <div class="line-placeholder short"></div>
+                        <i class="fa-solid fa-gavel hammer-icon"></i>
+                    </div>
+                </div>
+                <!-- Auction Card 3 -->
+                <div class="auction-card">
+                    <div class="item-img-placeholder"></div>
+                    <div class="item-info">
+                        <div class="line-placeholder"></div>
+                        <div class="line-placeholder short"></div>
+                        <i class="fa-solid fa-gavel hammer-icon"></i>
+                    </div>
+                </div>
+                <!-- Auction Card 4 -->
+                <div class="auction-card">
+                    <div class="item-img-placeholder"></div>
+                    <div class="item-info">
+                        <div class="line-placeholder"></div>
+                        <div class="line-placeholder short"></div>
+                        <i class="fa-solid fa-gavel hammer-icon"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -269,101 +329,5 @@
         <p>&copy; 2026 Mercato Nova - Passion Voile & Nautisme</p>
     </footer>
 
-    <script>
-        const items = [
-            { id: 1, name: 'Wing Foil Fanatic Sky Wing', cat: 'Wingfoil', price: 750, cond: 'Occasion', type: 'immediate', img: 'https://images.unsplash.com/photo-1629207431449-34752c1e7960?w=800' },
-            { id: 2, name: 'Windsurf Goya Nexus 2024', cat: 'Windsurf', price: 890, cond: 'Neuf', type: 'immediate', img: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800' },
-            { id: 3, name: 'Kitesurf North Reach 9m', cat: 'Kitesurf', price: 620, cond: 'Occasion', type: 'auction', img: 'https://images.unsplash.com/photo-1502933691298-84fa1463ec83?w=800' },
-            { id: 4, name: 'Surf Pyzel Ghost 6\'0"', cat: 'Surf', price: 780, cond: 'Neuf', type: 'negotiation', img: 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?w=800' }
-        ];
-
-        let currentAuction = null;
-
-        function renderItems() {
-            const container = document.getElementById('items-container');
-            container.innerHTML = items.map(item => `
-                <div class="item-card">
-                    <div class="card-image" style="background-image: url('${item.img}')">
-                        <span class="card-badge">${item.cond}</span>
-                    </div>
-                    <div class="card-content">
-                        <span class="card-category">${item.cat}</span>
-                        <h3 class="card-title">${item.name}</h3>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span class="card-price">${item.price} €</span>
-                            <span style="font-size:0.7rem; background:${item.type==='auction'?'var(--accent-orange)':'var(--success)'}; color:white; padding:3px 8px; border-radius:4px; font-weight:bold; text-transform:uppercase;">
-                                ${item.type==='auction'?'Enchère':item.type==='immediate'?'Achat':'Négo'}
-                            </span>
-                        </div>
-                        <button class="btn-marine ${item.type==='auction'?'btn-accent':''}" onclick="handleAction(${item.id})">
-                            ${item.type==='auction'?'⚓ Enchérir':'Voir Détails'}
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function handleAction(id) {
-            const item = items.find(i => i.id === id);
-            if (item.type === 'auction') {
-                showAuction(item);
-            } else {
-                alert("Détails pour " + item.name + " bientôt disponibles !");
-            }
-        }
-
-        function showAuction(item) {
-            currentAuction = item;
-            document.getElementById('home-view').classList.add('hidden');
-            document.getElementById('auction-view').classList.remove('hidden');
-            document.getElementById('auction-title').innerText = item.name;
-            document.getElementById('current-bid-display').innerText = item.price + " €";
-            
-            // Simulation d'historique
-            const history = [
-                { user: 'Jean L.', amount: item.price, time: '14:30' },
-                { user: 'Marie S.', amount: item.price - 20, time: '12:15' }
-            ];
-            updateHistory(history);
-            window.scrollTo(0,0);
-        }
-
-        function updateHistory(history) {
-            document.getElementById('bid-history').innerHTML = history.map((b, i) => `
-                <tr>
-                    <td>${i===0?'👑 ':''}${b.user}</td>
-                    <td style="font-weight:bold; color:var(--primary-blue)">${b.amount} €</td>
-                    <td style="color:#888; font-size:0.8rem;">${b.time}</td>
-                </tr>
-            `).join('');
-        }
-
-        function placeBid() {
-            const val = parseFloat(document.getElementById('bid-input').value);
-            const msg = document.getElementById('bid-message');
-            if (val > currentAuction.price) {
-                currentAuction.price = val;
-                document.getElementById('current-bid-display').innerText = val + " €";
-                msg.innerText = "⚓ Offre de " + val + "€ acceptée !";
-                msg.style.color = "var(--success)";
-                document.getElementById('bid-input').value = '';
-                // Simuler mise à jour historique
-                const newBid = { user: 'Moi (Démo)', amount: val, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) };
-                const table = document.getElementById('bid-history');
-                table.innerHTML = `<tr><td>👑 Moi (Démo)</td><td style="font-weight:bold; color:var(--primary-blue)">${val} €</td><td style="color:#888; font-size:0.8rem;">${newBid.time}</td></tr>` + table.innerHTML;
-            } else {
-                msg.innerText = "⚓ L'offre doit être supérieure à l'enchère actuelle.";
-                msg.style.color = "var(--error)";
-            }
-        }
-
-        function showHome() {
-            document.getElementById('home-view').classList.remove('hidden');
-            document.getElementById('auction-view').classList.add('hidden');
-            renderItems();
-        }
-
-        renderItems();
-    </script>
 </body>
 </html>
