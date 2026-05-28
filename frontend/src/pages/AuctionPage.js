@@ -24,7 +24,7 @@ function AuctionPage({ auctionId, onBack }) {
     const amount = parseFloat(bidAmount);
     
     if (isNaN(amount) || amount <= auction.current_bid) {
-      setMessage({ text: 'Votre offre doit être supérieure à l\'enchère actuelle.', type: 'error' });
+      setMessage({ text: '⚓ Votre offre doit être supérieure à l\'enchère actuelle.', type: 'error' });
       return;
     }
 
@@ -34,8 +34,7 @@ function AuctionPage({ auctionId, onBack }) {
         if (data.error) {
           setMessage({ text: data.error, type: 'error' });
         } else {
-          setMessage({ text: data.message, type: 'success' });
-          // Mise à jour locale pour la démo
+          setMessage({ text: `⚓ ${data.message}`, type: 'success' });
           setAuction({
             ...auction,
             current_bid: amount,
@@ -50,26 +49,37 @@ function AuctionPage({ auctionId, onBack }) {
   if (!auction) return <div style={{ textAlign: 'center', padding: '50px' }}>Enchère introuvable.</div>;
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <button onClick={onBack} style={{ marginBottom: '20px', background: 'none', border: 'none', color: '#007bff', cursor: 'pointer', fontSize: '1em' }}>
-        ← Retour au catalogue
+    <div className="auction-page">
+      <button onClick={onBack} style={{ 
+        marginBottom: '20px', 
+        background: 'none', 
+        border: 'none', 
+        color: 'var(--secondary-blue)', 
+        cursor: 'pointer', 
+        fontSize: '1rem',
+        fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px'
+      }}>
+        ⚓ Retour au catalogue
       </button>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-        <div>
-          <h2 style={{ marginBottom: '10px' }}>{auction.item_name}</h2>
-          <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '12px', border: '1px solid #dee2e6' }}>
-            <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '5px' }}>Enchère actuelle</p>
-            <p style={{ fontSize: '2.5em', fontWeight: 'bold', color: '#28a745', margin: '0' }}>{auction.current_bid} €</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '40px' }}>
+        <div style={{ background: 'var(--white)', padding: '30px', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
+          <h2 style={{ color: 'var(--primary-blue)', marginBottom: '10px' }}>{auction.item_name}</h2>
+          <div style={{ background: 'var(--light-blue)', padding: '25px', borderRadius: '12px', border: '2px solid var(--secondary-blue)' }}>
+            <p style={{ fontSize: '0.9rem', color: 'var(--primary-blue)', marginBottom: '5px', fontWeight: 'bold', textTransform: 'uppercase' }}>Enchère actuelle</p>
+            <p style={{ fontSize: '3rem', fontWeight: '900', color: 'var(--primary-blue)', margin: '0' }}>{auction.current_bid} €</p>
             
-            <div style={{ marginTop: '20px', padding: '10px', background: '#fff3cd', borderRadius: '8px', border: '1px solid #ffeeba' }}>
-              <p style={{ margin: 0, fontSize: '0.9em' }}>
-                <strong>Temps restant :</strong> 2 jours 4 heures
+            <div style={{ marginTop: '20px', padding: '12px', background: 'var(--sand)', borderRadius: '8px', border: '1px solid #d4c1b0', color: 'var(--primary-blue)' }}>
+              <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 'bold' }}>
+                ⏱️ Temps restant : 2 jours 4 heures
               </p>
             </div>
 
             <form onSubmit={handlePlaceBid} style={{ marginTop: '30px' }}>
-              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>Placer une offre</label>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: 'var(--primary-blue)' }}>Placer une offre (en €)</label>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <input 
                   type="number" 
@@ -77,14 +87,23 @@ function AuctionPage({ auctionId, onBack }) {
                   value={bidAmount}
                   onChange={(e) => setBidAmount(e.target.value)}
                   placeholder={`Min. ${(auction.current_bid + 1).toFixed(2)}`}
-                  style={{ flex: 1, padding: '12px', borderRadius: '6px', border: '1px solid #ced4da' }}
+                  style={{ flex: 1, padding: '15px', borderRadius: '8px', border: '2px solid #ced4da', fontSize: '1.1rem' }}
                 />
-                <button type="submit" style={{ padding: '12px 24px', background: '#007bff', color: 'white', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+                <button type="submit" className="btn-marine btn-accent" style={{ width: 'auto', padding: '0 30px' }}>
                   Enchérir
                 </button>
               </div>
               {message.text && (
-                <p style={{ marginTop: '10px', color: message.type === 'error' ? '#dc3545' : '#28a745', fontSize: '0.9em' }}>
+                <p style={{ 
+                  marginTop: '15px', 
+                  padding: '10px', 
+                  borderRadius: '6px',
+                  background: message.type === 'error' ? '#ffebee' : '#e8f5e9',
+                  color: message.type === 'error' ? var('--error') : var('--success'), 
+                  fontSize: '0.9rem',
+                  fontWeight: 'bold',
+                  border: `1px solid ${message.type === 'error' ? '#ffcdd2' : '#c8e6c9'}`
+                }}>
                   {message.text}
                 </p>
               )}
@@ -92,23 +111,25 @@ function AuctionPage({ auctionId, onBack }) {
           </div>
         </div>
 
-        <div>
-          <h3 style={{ marginBottom: '20px' }}>Historique des offres</h3>
-          <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #eee', borderRadius: '8px' }}>
+        <div style={{ background: 'var(--white)', padding: '30px', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ color: 'var(--primary-blue)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            📜 Historique des offres
+          </h3>
+          <div style={{ maxHeight: '450px', overflowY: 'auto', borderRadius: '8px', border: '1px solid #eee' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: '#f8f9fa', textAlign: 'left' }}>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #dee2e6' }}>Utilisateur</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #dee2e6' }}>Montant</th>
-                  <th style={{ padding: '12px', borderBottom: '1px solid #dee2e6' }}>Heure</th>
+                <tr style={{ background: 'var(--light-blue)', textAlign: 'left' }}>
+                  <th style={{ padding: '15px', color: 'var(--primary-blue)', fontSize: '0.9rem' }}>Utilisateur</th>
+                  <th style={{ padding: '15px', color: 'var(--primary-blue)', fontSize: '0.9rem' }}>Montant</th>
+                  <th style={{ padding: '15px', color: 'var(--primary-blue)', fontSize: '0.9rem' }}>Date</th>
                 </tr>
               </thead>
               <tbody>
                 {auction.history.map((bid, index) => (
-                  <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '12px', fontSize: '0.9em' }}>{bid.user}</td>
-                    <td style={{ padding: '12px', fontWeight: 'bold' }}>{bid.amount} €</td>
-                    <td style={{ padding: '12px', fontSize: '0.8em', color: '#666' }}>{bid.time}</td>
+                  <tr key={index} style={{ borderBottom: '1px solid #f0f0f0', background: index === 0 ? '#fffde7' : 'transparent' }}>
+                    <td style={{ padding: '15px', fontSize: '0.95rem' }}>{index === 0 ? '👑 ' : ''}{bid.user}</td>
+                    <td style={{ padding: '15px', fontWeight: 'bold', color: 'var(--primary-blue)' }}>{bid.amount} €</td>
+                    <td style={{ padding: '15px', fontSize: '0.8rem', color: '#888' }}>{bid.time}</td>
                   </tr>
                 ))}
               </tbody>

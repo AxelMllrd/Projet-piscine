@@ -1,0 +1,180 @@
+/* Charte graphique Mercato Nova - Thème Marine & Nautisme */
+
+:root {
+  --primary-blue: #004a7c; /* Bleu Profond Océan */
+  --secondary-blue: #0074b7; /* Bleu Mer */
+  --light-blue: #e1f5fe; /* Bleu Ciel / Eau peu profonde */
+  --accent-orange: #ff6f00; /* Orange Bouée / Sécurité */
+  --sand: #f4e1d2; /* Couleur Sable */
+  --foam: #f8fbff; /* Blanc Écume */
+  --dark-grey: #2c3e50; /* Gris Ancre */
+  --white: #ffffff;
+  --success: #2e7d32;
+  --error: #d32f2f;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--foam);
+  color: var(--dark-grey);
+  background-image: radial-gradient(var(--light-blue) 0.5px, transparent 0.5px);
+  background-size: 20px 20px; /* Texture légère rappelant les cartes marines */
+}
+
+/* Header & Navigation */
+.app-header {
+  background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+  color: var(--white);
+  padding: 2rem 1rem;
+  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 74, 124, 0.2);
+  border-bottom: 5px solid var(--accent-orange);
+}
+
+.app-logo {
+  font-size: 2.5rem;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-weight: 800;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  cursor: pointer;
+}
+
+.app-subtitle {
+  font-style: italic;
+  opacity: 0.9;
+  margin-top: 0.5rem;
+}
+
+/* Main Container */
+.main-content {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+/* Hero Section / Banner */
+.hero-section {
+  background-color: var(--sand);
+  padding: 40px;
+  border-radius: 15px;
+  margin-bottom: 40px;
+  border: 2px dashed var(--secondary-blue);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::after {
+  content: '⚓';
+  position: absolute;
+  right: -20px;
+  bottom: -20px;
+  font-size: 150px;
+  opacity: 0.05;
+  transform: rotate(-15deg);
+}
+
+/* Grid & Cards */
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.item-card {
+  background: var(--white);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+  border: 1px solid #e0e0e0;
+}
+
+.item-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 25px rgba(0, 74, 124, 0.15);
+  border-color: var(--secondary-blue);
+}
+
+.card-image-container {
+  height: 220px;
+  position: relative;
+  background-color: var(--light-blue);
+}
+
+.card-badge-condition {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: var(--white);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--primary-blue);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card-content {
+  padding: 20px;
+}
+
+.card-category {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--secondary-blue);
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.card-title {
+  margin: 10px 0;
+  font-size: 1.25rem;
+  color: var(--primary-blue);
+}
+
+.card-price {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--dark-grey);
+}
+
+/* Buttons */
+.btn-marine {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--secondary-blue);
+  color: var(--white);
+  font-weight: bold;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-marine:hover {
+  background: var(--primary-blue);
+}
+
+.btn-accent {
+  background: var(--accent-orange);
+}
+
+.btn-accent:hover {
+  background: #e65100;
+}
+
+/* Footer */
+.app-footer {
+  margin-top: 80px;
+  padding: 40px 0;
+  background: var(--dark-grey);
+  color: var(--white);
+  text-align: center;
+  border-top: 5px solid var(--secondary-blue);
+}

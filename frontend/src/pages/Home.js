@@ -5,7 +5,6 @@ function Home({ onNavigateToAuction }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Récupération des articles depuis le backend
     fetch('/backend/index.php?action=items')
       .then(res => res.json())
       .then(data => {
@@ -43,72 +42,56 @@ function Home({ onNavigateToAuction }) {
 
   return (
     <div className="home-container">
-      <section style={{ marginBottom: '40px', background: '#f0f7ff', padding: '30px', borderRadius: '12px' }}>
-        <h2 style={{ color: '#0056b3', marginTop: 0 }}>Matériel de Voile Légère</h2>
-        <p>Retrouvez le meilleur équipement pour le Surf, Windsurf, Foil et Kitesurf. Neuf ou occasion.</p>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '15px' }}>
+      <section className="hero-section">
+        <h2 style={{ color: 'var(--primary-blue)', marginTop: 0 }}>Vagues, Vent & Passion</h2>
+        <p>Le comptoir n°1 pour votre matériel de voile légère. Trouvez la perle rare ou vendez votre équipement à la communauté.</p>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '20px' }}>
           {['Surf', 'Windsurf', 'Windfoil', 'Wingfoil', 'Pumpfoil', 'Kitesurf', 'Kitefoil'].map(cat => (
-            <span key={cat} style={{ background: 'white', padding: '5px 15px', borderRadius: '20px', fontSize: '0.9em', border: '1px solid #007bff', color: '#007bff', cursor: 'pointer' }}>
+            <span key={cat} style={{ 
+              background: 'var(--white)', 
+              padding: '8px 18px', 
+              borderRadius: '25px', 
+              fontSize: '0.85rem', 
+              border: '2px solid var(--secondary-blue)', 
+              color: 'var(--secondary-blue)', 
+              fontWeight: 'bold',
+              cursor: 'pointer' 
+            }}>
               {cat}
             </span>
           ))}
         </div>
       </section>
 
-      <div className="item-grid" style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-        gap: '30px' 
-      }}>
+      <div className="item-grid">
         {items.map(item => (
-          <div key={item.id} className="item-card" style={{ 
-            border: '1px solid #eee', 
-            borderRadius: '12px', 
-            overflow: 'hidden',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-            transition: 'transform 0.2s',
-            background: 'white'
-          }}>
-            <div style={{ 
-              height: '200px', 
+          <div key={item.id} className="item-card">
+            <div className="card-image-container" style={{ 
               backgroundImage: `url(${item.image_url})`, 
               backgroundSize: 'cover', 
-              backgroundPosition: 'center',
-              position: 'relative'
+              backgroundPosition: 'center'
             }}>
-              <span style={{ 
-                position: 'absolute', 
-                top: '10px', 
-                right: '10px', 
-                background: 'rgba(255,255,255,0.9)', 
-                padding: '2px 10px', 
-                borderRadius: '10px', 
-                fontSize: '0.8em',
-                fontWeight: 'bold'
-              }}>
+              <span className="card-badge-condition">
                 {getConditionLabel(item.item_condition)}
               </span>
             </div>
             
-            <div style={{ padding: '15px' }}>
-              <span style={{ fontSize: '0.75em', textTransform: 'uppercase', color: '#888', fontWeight: 'bold' }}>
-                {item.category}
-              </span>
-              <h3 style={{ margin: '5px 0 10px 0', fontSize: '1.1em' }}>{item.name}</h3>
-              <p style={{ fontSize: '0.9em', color: '#666', height: '40px', overflow: 'hidden' }}>
+            <div className="card-content">
+              <span className="card-category">{item.category}</span>
+              <h3 className="card-title">{item.name}</h3>
+              <p style={{ fontSize: '0.9rem', color: '#666', height: '40px', overflow: 'hidden', marginBottom: '15px' }}>
                 {item.description}
               </p>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
-                <span style={{ fontSize: '1.2em', fontWeight: 'bold', color: '#333' }}>
-                  {item.price} €
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <span className="card-price">{item.price} €</span>
                 <span style={{ 
-                  fontSize: '0.7em', 
-                  padding: '3px 8px', 
+                  fontSize: '0.65rem', 
+                  padding: '4px 10px', 
                   borderRadius: '4px', 
                   color: 'white', 
                   background: getBadgeColor(item.sale_type),
+                  fontWeight: 'bold',
                   textTransform: 'uppercase'
                 }}>
                   {item.sale_type === 'immediate' ? 'Achat Direct' : item.sale_type === 'auction' ? 'Enchère' : 'Négociation'}
@@ -117,19 +100,9 @@ function Home({ onNavigateToAuction }) {
               
               <button 
                 onClick={() => handleActionClick(item)}
-                style={{ 
-                  width: '100%', 
-                  padding: '12px', 
-                  marginTop: '15px', 
-                  background: '#007bff', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold'
-                }}
+                className={`btn-marine ${item.sale_type === 'auction' ? 'btn-accent' : ''}`}
               >
-                {item.sale_type === 'auction' ? 'Participer à l\'enchère' : 'Voir les détails'}
+                {item.sale_type === 'auction' ? '⚓ Enchérir' : 'Voir les détails'}
               </button>
             </div>
           </div>

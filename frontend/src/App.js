@@ -17,23 +17,30 @@ function App() {
   const navigateToAuction = (id) => {
     setSelectedAuctionId(id);
     setCurrentPage('auction');
+    window.scrollTo(0, 0);
   };
 
   const navigateToHome = () => {
     setCurrentPage('home');
+    window.scrollTo(0, 0);
   };
 
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
-      <header style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <h1 style={{ color: '#007bff', cursor: 'pointer' }} onClick={navigateToHome}>Mercato Nova</h1>
-        <p>Le magasinage en ligne de notre époque - Spécialiste Voile Légère</p>
-        <span style={{ fontSize: '0.8em', color: status.includes('Erreur') ? 'red' : 'green' }}>
-          ● {status}
-        </span>
+    <div className="app-container">
+      <header className="app-header">
+        <h1 className="app-logo" onClick={navigateToHome}>
+          ⚓ Mercato Nova
+        </h1>
+        <p className="app-subtitle">Le magasinage en ligne de notre époque - Spécialiste Voile Légère</p>
+        <div style={{ marginTop: '10px' }}>
+          <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: '15px', background: 'rgba(255,255,255,0.2)' }}>
+            <span style={{ color: status.includes('Erreur') || status.includes('attente') ? '#ffccbc' : '#b9f6ca', marginRight: '5px' }}>●</span>
+            {status}
+          </span>
+        </div>
       </header>
       
-      <main>
+      <main className="main-content">
         {currentPage === 'home' ? (
           <Home onNavigateToAuction={navigateToAuction} />
         ) : (
@@ -41,8 +48,9 @@ function App() {
         )}
       </main>
 
-      <footer style={{ marginTop: '50px', borderTop: '1px solid #eee', paddingTop: '20px', textAlign: 'center', fontSize: '0.8em', color: '#666' }}>
-        Projet Web Dynamique 2026 - ING2
+      <footer className="app-footer">
+        <p style={{ margin: 0 }}>&copy; 2026 Mercato Nova - Passion Voile & Nautisme</p>
+        <p style={{ fontSize: '0.8rem', marginTop: '10px', opacity: 0.7 }}>Projet Web Dynamique - ING2 - ECE</p>
       </footer>
     </div>
   );
