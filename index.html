@@ -430,10 +430,6 @@
                     <input type="text" id="reg-user" placeholder="Pseudo">
                     <input type="email" id="reg-email" placeholder="Email">
                     <input type="password" id="reg-pass" placeholder="Mot de passe">
-                    <select id="reg-role">
-                        <option value="acheteur">Je suis un Acheteur</option>
-                        <option value="vendeur">Je suis un Vendeur</option>
-                    </select>
                     <label style="font-size:0.8rem; display:block; margin-bottom:15px;">
                         <input type="checkbox" id="reg-cgu"> J'accepte les CGU
                     </label>
@@ -498,6 +494,13 @@
                         </div>
                     </div>
                     
+                    <div class="dashboard-card" style="margin-top:25px;">
+                        <div class="card-header"><i class="fa-solid fa-comments-dollar"></i> Mes Négociations</div>
+                        <div id="nego-dashboard-list">
+                            <p style="color:var(--text-muted);font-size:0.9rem;text-align:center;padding:10px;">Chargement...</p>
+                        </div>
+                    </div>
+
                     <div style="margin-top:40px; display:flex; justify-content:flex-end;">
                         <button class="btn-logout" onclick="simulateLogout()">
                             <i class="fa-solid fa-right-from-bracket"></i> Se déconnecter
@@ -560,55 +563,29 @@
         <div id="negotiation-view" class="view">
             <div class="nego-layout">
                 <aside class="nego-summary">
-                    <div style="height:200px; background:#ced4da; border-radius:8px; margin-bottom:20px;"></div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Prix initial:</span> <strong>1 200 €</strong></div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>État:</span> <strong>Très bon</strong></div>
-                    <div style="display:flex; justify-content:space-between;"><span>Vendeur:</span> <strong>WingPro 🌟 4.7</strong></div>
+                    <div id="nego-item-img" style="height:200px; background:#ced4da; border-radius:8px; margin-bottom:20px; background-size:cover; background-position:center;"></div>
+                    <div id="nego-item-details">
+                        <div style="text-align:center; color:var(--text-muted); font-size:0.9rem;">Chargement...</div>
+                    </div>
                 </aside>
-                
+
                 <section class="nego-main">
                     <div class="nego-header">
                         <div>
-                            <h2 style="margin:0;">Négociation en cours</h2>
-                            <p style="color:#888; font-size:0.85rem; margin:5px 0 0 0;">Échange 3 sur 5 maximum</p>
+                            <h2 style="margin:0;" id="nego-title">Négociation</h2>
+                            <p style="color:#888; font-size:0.85rem; margin:5px 0 0 0;" id="nego-exchange-count"></p>
                         </div>
-                        <span class="status-badge">Active</span>
+                        <span class="status-badge" id="nego-status-badge">Active</span>
                     </div>
 
-                    <div class="timeline">
-                        <!-- Message 1 -->
-                        <div class="timeline-item buyer">
-                            <div class="avatar">V</div>
-                            <div class="nego-meta"><span>Vous avez proposé</span> <span>Il y a 2 jours</span></div>
-                            <div class="nego-price">1 000 €</div>
-                            <div style="font-size:0.9rem; color:var(--text-muted);">Proposition initiale</div>
-                        </div>
-                        <!-- Message 2 -->
-                        <div class="timeline-item">
-                            <div class="avatar seller">W</div>
-                            <div class="nego-meta"><span>WingPro a contré</span> <span>Il y a 1 jour</span></div>
-                            <div class="nego-price">1 150 €</div>
-                            <div style="font-size:0.9rem; color:var(--text-muted);">"La planche est en excellent état avec housse incluse"</div>
-                        </div>
-                        <!-- Message 3 -->
-                        <div class="timeline-item buyer">
-                            <div class="avatar">V</div>
-                            <div class="nego-meta"><span>Vous avez proposé</span> <span>Il y a 3 heures</span></div>
-                            <div class="nego-price">1 100 €</div>
-                            <div style="font-size:0.9rem; color:var(--text-muted);">"Prix final avec livraison incluse ?"</div>
+                    <div class="timeline" id="nego-timeline">
+                        <div style="text-align:center; padding:40px; color:var(--text-muted);">
+                            <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; display:block; margin-bottom:15px;"></i>
+                            Chargement...
                         </div>
                     </div>
 
-                    <div class="reply-box">
-                        <h3 style="margin-top:0;">Votre réponse (en attente du vendeur)</h3>
-                        <textarea style="width:100%; height:80px; padding:15px; border-radius:8px; border:1px solid #ddd; background:#f8f9fa; box-sizing:border-box;" placeholder="Message optionnel"></textarea>
-                        <div class="reply-actions">
-                            <button class="btn-nego btn-accept">Accepter (1 100 €)</button>
-                            <button class="btn-nego btn-counter">Contre-offre</button>
-                            <button class="btn-nego btn-refuse">Refuser</button>
-                        </div>
-                        <p style="text-align:center; font-size:0.75rem; color:#888; margin-top:15px;">Temps restant pour répondre: 68h 45min</p>
-                    </div>
+                    <div class="reply-box" id="nego-reply-box"></div>
                 </section>
             </div>
         </div>
@@ -714,7 +691,6 @@
             const username = document.getElementById('reg-user').value.trim();
             const email    = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-pass').value;
-            const role     = document.getElementById('reg-role').value;
             const cgu      = document.getElementById('reg-cgu').checked;
 
             if (!nom || !prenom || !username || !email || !password) {
@@ -730,7 +706,7 @@
                 const response = await fetch('backend/register.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nom, prenom, username, email, password, role })
+                    body: JSON.stringify({ nom, prenom, username, email, password })
                 });
 
                 const data = await response.json();
@@ -753,8 +729,8 @@
             document.getElementById('user-display-name').innerText = currentUser.username;
             document.getElementById('info-username').innerText = '@' + currentUser.username;
             document.getElementById('info-email').innerText = currentUser.email;
-            document.getElementById('info-role').innerText = currentUser.role;
-            document.getElementById('user-avatar').innerText = currentUser.role === 'vendeur' ? '🚢' : '⚓';
+            document.getElementById('info-role').innerText = 'Membre';
+            document.getElementById('user-avatar').innerText = '⚓';
 
             try {
                 const response = await fetch(`backend/get_user_stats.php?user_id=${currentUser.id}`);
@@ -767,6 +743,56 @@
             } catch (error) {
                 console.error('Erreur stats:', error);
             }
+
+            try {
+                const negoResp = await fetch(`backend/index.php?action=my_negotiations&user_id=${currentUser.id}`);
+                if (negoResp.ok) {
+                    const negos = await negoResp.json();
+                    renderDashboardNegotiations(Array.isArray(negos) ? negos : []);
+                }
+            } catch (e) {
+                console.error('Erreur negos dashboard:', e);
+            }
+        }
+
+        function renderDashboardNegotiations(negos) {
+            const container = document.getElementById('nego-dashboard-list');
+            if (!container) return;
+            if (negos.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);font-size:0.9rem;text-align:center;padding:10px;">Aucune négociation pour le moment.</p>';
+                return;
+            }
+            const statusStyle = {
+                pending:  { color:'#f39c12',              label:'En cours' },
+                accepted: { color:'var(--success-green)', label:'Acceptée' },
+                rejected: { color:'var(--danger-red)',    label:'Refusée' },
+                expired:  { color:'var(--text-muted)',    label:'Expirée' }
+            };
+            container.innerHTML = '<ul class="activity-list">' +
+                negos.map(n => {
+                    const s    = statusStyle[n.status] || { color:'#888', label:n.status };
+                    const role = n.my_role === 'buyer' ? '🛒 Acheteur' : '🏪 Vendeur';
+                    const offer = n.last_offer ? parseFloat(n.last_offer).toLocaleString('fr-FR') + ' €' : '—';
+                    return `
+                        <li class="activity-item" style="cursor:pointer;"
+                            onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background=''"
+                            onclick="openNegoFromDashboard(${parseInt(n.id)})">
+                            <span>
+                                <strong>${escapeHtml(n.item_name)}</strong>
+                                <span style="font-size:0.75rem;color:var(--text-muted);margin-left:6px;">${role}</span>
+                            </span>
+                            <span style="display:flex;align-items:center;gap:10px;">
+                                <span style="font-weight:600;">${offer}</span>
+                                <span style="font-size:0.75rem;color:${s.color};font-weight:700;">${s.label}</span>
+                            </span>
+                        </li>`;
+                }).join('') +
+            '</ul>';
+        }
+
+        async function openNegoFromDashboard(negoId) {
+            showView('negotiation');
+            await loadNegotiation(negoId);
         }
 
         function simulateLogout() {
@@ -883,27 +909,49 @@
                     imgEl.innerHTML = `<i class="fa-solid ${product.sale_type === 'auction' ? 'fa-gavel' : 'fa-box-open'}"></i>`;
                 }
 
-                if (product.sale_type === 'auction') {
-                    const currentBid = product.auction
-                        ? parseFloat(product.auction.current_bid)
-                        : parseFloat(product.price);
-                    document.getElementById('auction-action-panel').style.display = 'block';
-                    document.getElementById('buy-action-panel').style.display = 'none';
-                    document.getElementById('auction-price-display').innerText = currentBid.toLocaleString('fr-FR') + ' €';
-                    document.getElementById('bid-input').value = '';
-                    const bidFeedback = document.getElementById('bid-feedback');
-                    if (bidFeedback) bidFeedback.innerText = '';
-                    document.getElementById('btn-place-bid').onclick = () => handlePlaceBid(product.id, currentBid);
-                } else {
-                    const price = parseFloat(product.price);
+                // Badge "votre annonce" si l'utilisateur est le vendeur
+                const isOwnItem = currentUser && parseInt(product.seller_id) === parseInt(currentUser.id);
+                let ownBadge = document.getElementById('own-item-badge');
+                if (!ownBadge) {
+                    ownBadge = document.createElement('div');
+                    ownBadge.id = 'own-item-badge';
+                    ownBadge.innerHTML = `
+                        <div style="border:2px solid var(--primary-blue);border-radius:12px;padding:30px;text-align:center;background:#f0f7ff;">
+                            <i class="fa-solid fa-store" style="font-size:2.5rem;color:var(--primary-blue);display:block;margin-bottom:12px;"></i>
+                            <p style="font-weight:800;font-size:1.1rem;color:var(--primary-blue);margin:0;">C'est votre annonce</p>
+                            <p style="font-size:0.85rem;color:var(--text-muted);margin:8px 0 0;">Vous êtes le vendeur de cet article.</p>
+                        </div>`;
+                    document.querySelector('.info-panel').appendChild(ownBadge);
+                }
+
+                if (isOwnItem) {
                     document.getElementById('auction-action-panel').style.display = 'none';
-                    document.getElementById('buy-action-panel').style.display = 'block';
-                    document.getElementById('buy-item-name').innerText = product.name;
-                    document.getElementById('buy-price-display').innerText = price.toLocaleString('fr-FR') + ' €';
-                    document.getElementById('btn-buy-now').style.display = '';
-                    document.getElementById('btn-buy-now').onclick = () => handleBuyNow(product.id, product.price);
-                    const negoBtn = document.getElementById('btn-propose-prix');
-                    if (negoBtn) negoBtn.style.display = product.sale_type === 'negotiation' ? '' : 'none';
+                    document.getElementById('buy-action-panel').style.display = 'none';
+                    ownBadge.style.display = 'block';
+                } else {
+                    ownBadge.style.display = 'none';
+                    if (product.sale_type === 'auction') {
+                        const currentBid = product.auction
+                            ? parseFloat(product.auction.current_bid)
+                            : parseFloat(product.price);
+                        document.getElementById('auction-action-panel').style.display = 'block';
+                        document.getElementById('buy-action-panel').style.display = 'none';
+                        document.getElementById('auction-price-display').innerText = currentBid.toLocaleString('fr-FR') + ' €';
+                        document.getElementById('bid-input').value = '';
+                        const bidFeedback = document.getElementById('bid-feedback');
+                        if (bidFeedback) bidFeedback.innerText = '';
+                        document.getElementById('btn-place-bid').onclick = () => handlePlaceBid(product.id, currentBid);
+                    } else {
+                        const price = parseFloat(product.price);
+                        document.getElementById('auction-action-panel').style.display = 'none';
+                        document.getElementById('buy-action-panel').style.display = 'block';
+                        document.getElementById('buy-item-name').innerText = product.name;
+                        document.getElementById('buy-price-display').innerText = price.toLocaleString('fr-FR') + ' €';
+                        document.getElementById('btn-buy-now').style.display = '';
+                        document.getElementById('btn-buy-now').onclick = () => handleBuyNow(product.id, product.price);
+                        const negoBtn = document.getElementById('btn-propose-prix');
+                        if (negoBtn) negoBtn.style.display = product.sale_type === 'negotiation' ? '' : 'none';
+                    }
                 }
             } catch (error) {
                 console.error('Erreur détail:', error);
@@ -1024,13 +1072,205 @@
                 });
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    alert(data.message || 'Votre offre a été envoyée au vendeur !');
                     showView('negotiation');
+                    await loadNegotiation(data.negotiation_id);
                 } else {
                     alert(data.error || "Erreur lors de l'envoi de l'offre.");
                 }
             } catch (error) {
                 console.error('Erreur négociation:', error);
+                alert('Impossible de joindre le serveur.');
+            }
+        }
+
+        // ===== BOUCLE DE NÉGOCIATION =====
+
+        let currentNegoId = null;
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function loadNegotiation(negoId) {
+            currentNegoId = negoId;
+            document.getElementById('nego-timeline').innerHTML = `
+                <div style="text-align:center;padding:40px;color:var(--text-muted);">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;display:block;margin-bottom:15px;"></i>Chargement...
+                </div>`;
+            document.getElementById('nego-reply-box').innerHTML = '';
+            document.getElementById('nego-item-details').innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.9rem;">Chargement...</div>';
+
+            try {
+                const response = await fetch(`backend/index.php?action=get_negotiation&id=${negoId}`);
+                if (!response.ok) throw new Error(`Erreur serveur (${response.status})`);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                // En-tête
+                document.getElementById('nego-title').innerText = `Négociation : ${data.item_name}`;
+                document.getElementById('nego-exchange-count').innerText = `Échange ${data.exchange_count} sur 5 maximum`;
+                document.getElementById('bc-prod').innerText = data.item_name || 'Négociation';
+                const badge = document.getElementById('nego-status-badge');
+                const badgeStyles = {
+                    pending:  { bg:'#e8f5e9', color:'var(--success-green)', label:'Active' },
+                    accepted: { bg:'#e8f5e9', color:'var(--success-green)', label:'Acceptée' },
+                    rejected: { bg:'#fee2e2', color:'var(--danger-red)',    label:'Refusée' },
+                    expired:  { bg:'#f5f5f5', color:'var(--text-muted)',    label:'Expirée' }
+                };
+                const bs = badgeStyles[data.status] || { bg:'#f5f5f5', color:'#888', label:data.status };
+                badge.innerText = bs.label;
+                badge.style.background = bs.bg;
+                badge.style.color = bs.color;
+
+                // Sidebar
+                const imgDiv = document.getElementById('nego-item-img');
+                if (data.image_url) {
+                    imgDiv.style.backgroundImage = `url('${data.image_url}')`;
+                }
+                document.getElementById('nego-item-details').innerHTML = `
+                    <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                        <span>Prix initial :</span><strong>${parseFloat(data.item_price).toLocaleString('fr-FR')} €</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                        <span>Dernière offre :</span><strong>${data.last_offer ? parseFloat(data.last_offer).toLocaleString('fr-FR') + ' €' : '—'}</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+                        <span>Acheteur :</span><strong>${escapeHtml(data.buyer_username)}</strong>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;">
+                        <span>Vendeur :</span><strong>${escapeHtml(data.seller_username)}</strong>
+                    </div>`;
+
+                renderNegoTimeline(data.messages);
+                renderReplyBox(data);
+            } catch (error) {
+                console.error('Erreur chargement négociation:', error);
+                document.getElementById('nego-timeline').innerHTML = `
+                    <div style="text-align:center;padding:40px;color:var(--danger-red);">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem;display:block;margin-bottom:10px;"></i>
+                        ${escapeHtml(error.message)}
+                    </div>`;
+            }
+        }
+
+        function renderNegoTimeline(messages) {
+            const timeline = document.getElementById('nego-timeline');
+            if (!messages || messages.length === 0) {
+                timeline.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:20px;">Aucun échange pour le moment.</p>';
+                return;
+            }
+            const typeLabel = { offer:'a proposé', counter:'a contre-proposé', accept:'a accepté', reject:'a refusé' };
+            timeline.innerHTML = messages.map(msg => {
+                const isMine   = currentUser && parseInt(msg.sender_id) === currentUser.id;
+                const label    = typeLabel[msg.type] || msg.type;
+                const priceHtml = msg.amount ? `<div class="nego-price">${parseFloat(msg.amount).toLocaleString('fr-FR')} €</div>` : '';
+                const msgHtml   = msg.message ? `<div style="font-size:0.9rem;color:var(--text-muted);margin-top:5px;">${escapeHtml(msg.message)}</div>` : '';
+                const timeStr   = new Date(msg.created_at).toLocaleString('fr-FR');
+                const letter    = (msg.sender_username || '?')[0].toUpperCase();
+                return `
+                    <div class="timeline-item${isMine ? ' buyer' : ''}">
+                        <div class="avatar${isMine ? '' : ' seller'}">${letter}</div>
+                        <div class="nego-meta">
+                            <span><strong>${escapeHtml(msg.sender_username)}</strong> ${label}</span>
+                            <span>${timeStr}</span>
+                        </div>
+                        ${priceHtml}${msgHtml}
+                    </div>`;
+            }).join('');
+        }
+
+        function renderReplyBox(negoData) {
+            const box = document.getElementById('nego-reply-box');
+            if (negoData.status !== 'pending') {
+                const s = ({
+                    accepted:{ icon:'✅', text:'Négociation acceptée', color:'var(--success-green)' },
+                    rejected:{ icon:'❌', text:'Négociation refusée',  color:'var(--danger-red)' },
+                    expired: { icon:'⏰', text:'Négociation expirée',  color:'var(--text-muted)' }
+                })[negoData.status] || { icon:'?', text:negoData.status, color:'#888' };
+                box.innerHTML = `
+                    <div style="text-align:center;padding:25px;background:#f8f9fa;border-radius:8px;margin-top:20px;">
+                        <span style="font-size:2rem;">${s.icon}</span>
+                        <p style="font-weight:700;color:${s.color};margin:10px 0 0;">${s.text}</p>
+                    </div>`;
+                return;
+            }
+
+            const messages    = negoData.messages || [];
+            const lastMsg     = messages[messages.length - 1];
+            const isMyTurn    = !lastMsg || (currentUser && parseInt(lastMsg.sender_id) !== currentUser.id);
+            const exchangeCount = negoData.exchange_count || 0;
+            const atLimit     = exchangeCount >= 5;
+            const lastOffer   = negoData.last_offer ? parseFloat(negoData.last_offer).toLocaleString('fr-FR') : null;
+
+            if (!currentUser || !isMyTurn) {
+                box.innerHTML = `
+                    <div style="text-align:center;padding:20px;background:#fffbec;border-radius:8px;border:1px solid #ffe58f;margin-top:20px;">
+                        <i class="fa-solid fa-clock" style="color:#f39c12;font-size:1.5rem;"></i>
+                        <p style="margin:10px 0 0;font-weight:600;color:#8a6000;">En attente de la réponse de l'autre partie...</p>
+                    </div>`;
+                return;
+            }
+
+            const cntStyle  = atLimit ? 'opacity:0.5;cursor:not-allowed;' : '';
+            const limitNote = atLimit ? '<p style="text-align:center;font-size:0.8rem;color:var(--danger-red);margin-top:8px;">Limite de 5 échanges atteinte — acceptez ou refusez.</p>' : '';
+            box.innerHTML = `
+                <h3 style="margin-top:0;margin-bottom:15px;">Votre réponse</h3>
+                <textarea id="nego-reply-message" placeholder="Message optionnel..."
+                    style="width:100%;height:70px;padding:12px;border-radius:8px;border:1px solid #ddd;background:#f8f9fa;box-sizing:border-box;font-family:inherit;resize:vertical;"></textarea>
+                <div id="nego-counter-input" style="display:none;margin-top:10px;">
+                    <input type="number" id="nego-counter-amount" min="1" step="1" placeholder="Votre contre-offre en €"
+                        style="width:100%;padding:12px;border:1px solid var(--secondary-blue);border-radius:8px;font-size:1rem;box-sizing:border-box;">
+                </div>
+                <div class="reply-actions" style="margin-top:15px;">
+                    <button class="btn-nego btn-accept" onclick="submitNegoReply('accept')">
+                        Accepter${lastOffer ? ' (' + lastOffer + ' €)' : ''}
+                    </button>
+                    <button class="btn-nego btn-counter" style="${cntStyle}" onclick="toggleCounterInput()" ${atLimit ? 'disabled' : ''}>
+                        Contre-offre
+                    </button>
+                    <button class="btn-nego btn-refuse" onclick="submitNegoReply('reject')">Refuser</button>
+                </div>
+                ${limitNote}
+                <p style="text-align:center;font-size:0.75rem;color:#888;margin-top:12px;">Échange ${exchangeCount} / 5</p>`;
+        }
+
+        function toggleCounterInput() {
+            const div = document.getElementById('nego-counter-input');
+            if (!div) return;
+            const show = div.style.display === 'none';
+            div.style.display = show ? 'block' : 'none';
+            if (show) document.getElementById('nego-counter-amount')?.focus();
+        }
+
+        async function submitNegoReply(action) {
+            if (!currentUser || !currentNegoId) return;
+            const message = document.getElementById('nego-reply-message')?.value?.trim() || null;
+            let amount = null;
+
+            if (action === 'counter') {
+                const el = document.getElementById('nego-counter-amount');
+                if (!el || !el.value) { alert('Saisissez un montant pour la contre-offre.'); return; }
+                amount = parseFloat(el.value);
+                if (isNaN(amount) || amount <= 0) { alert('Montant invalide.'); return; }
+            }
+            if (action === 'reject' && !confirm('Confirmer le refus de cette négociation ?')) return;
+            if (action === 'accept' && !confirm("Confirmer l'acceptation de cette offre ?")) return;
+
+            try {
+                const response = await fetch('backend/index.php?action=reply_negotiation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ negotiation_id: currentNegoId, user_id: currentUser.id, action, amount, message })
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    await loadNegotiation(currentNegoId);
+                } else {
+                    alert(data.error || 'Erreur.');
+                }
+            } catch (error) {
+                console.error('Erreur réponse:', error);
                 alert('Impossible de joindre le serveur.');
             }
         }

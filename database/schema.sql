@@ -84,6 +84,19 @@ CREATE TABLE IF NOT EXISTS negotiations (
     FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Table historique des messages de négociation
+CREATE TABLE IF NOT EXISTS negotiation_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    negotiation_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    type ENUM('offer','counter','accept','reject') NOT NULL,
+    amount DECIMAL(10,2),
+    message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (negotiation_id) REFERENCES negotiations(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Table des notifications
 CREATE TABLE IF NOT EXISTS notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,

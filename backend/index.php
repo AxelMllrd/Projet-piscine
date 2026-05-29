@@ -12,6 +12,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once 'config.php';
 
+// Crée la table d'historique de négociation si elle n'existe pas encore
+$pdo->exec("CREATE TABLE IF NOT EXISTS negotiation_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    negotiation_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    type ENUM('offer','counter','accept','reject') NOT NULL,
+    amount DECIMAL(10,2),
+    message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (negotiation_id) REFERENCES negotiations(id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 // Routeur basique
 $action = isset($_GET['action']) ? $_GET['action'] : 'status';
 
@@ -105,6 +118,13 @@ switch ($action) {
         }
 
         try {
+            $stmt = $pdo->prepare("SELECT seller_id FROM items WHERE id = ?");
+            $stmt->execute([$item_id]);
+            $item_row = $stmt->fetch();
+            if ($item_row && (int)$item_row['seller_id'] === $user_id) {
+                sendResponse(['error' => "Vous ne pouvez pas enchérir sur votre propre annonce."], 403);
+            }
+
             $pdo->beginTransaction();
 
             $stmt = $pdo->prepare(
@@ -158,18 +178,22 @@ switch ($action) {
         }
         $input   = json_decode(file_get_contents('php://input'), true);
         $item_id = isset($input['item_id']) ? (int)$input['item_id'] : 0;
+        $user_id = isset($input['user_id']) ? (int)$input['user_id'] : 0;
 
-        if (!$item_id) {
-            sendResponse(['error' => 'Article non spécifié.'], 400);
+        if (!$item_id || !$user_id) {
+            sendResponse(['error' => 'Données incomplètes.'], 400);
         }
 
         try {
-            $stmt = $pdo->prepare("SELECT id, status FROM items WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, status, seller_id FROM items WHERE id = ?");
             $stmt->execute([$item_id]);
             $item = $stmt->fetch();
 
             if (!$item) {
                 sendResponse(['error' => 'Article introuvable.'], 404);
+            }
+            if ((int)$item['seller_id'] === $user_id) {
+                sendResponse(['error' => "Vous ne pouvez pas acheter votre propre article."], 403);
             }
             if ($item['status'] === 'sold') {
                 sendResponse(['error' => 'Cet article a déjà été vendu.'], 400);
@@ -200,7 +224,7 @@ switch ($action) {
             sendResponse(['error' => 'Données incomplètes.'], 400);
         }
         try {
-            $stmt = $pdo->prepare("SELECT id, sale_type, status FROM items WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, sale_type, status, seller_id FROM items WHERE id = ?");
             $stmt->execute([$item_id]);
             $item = $stmt->fetch();
 
@@ -209,6 +233,9 @@ switch ($action) {
             }
             if ($item['sale_type'] !== 'negotiation') {
                 sendResponse(['error' => "Cet article ne propose pas la négociation."], 400);
+            }
+            if ((int)$item['seller_id'] === $buyer_id) {
+                sendResponse(['error' => "Vous ne pouvez pas négocier sur votre propre annonce."], 403);
             }
 
             $stmt = $pdo->prepare(
@@ -220,17 +247,200 @@ switch ($action) {
                 sendResponse(['error' => 'Une négociation est déjà en cours pour cet article.'], 400);
             }
 
+            $pdo->beginTransaction();
+
             $stmt = $pdo->prepare(
                 "INSERT INTO negotiations (item_id, buyer_id, status, last_offer) VALUES (?, ?, 'pending', ?)"
             );
             $stmt->execute([$item_id, $buyer_id, $offer]);
+            $nego_id = $pdo->lastInsertId();
+
+            $stmt = $pdo->prepare(
+                "INSERT INTO negotiation_messages (negotiation_id, sender_id, type, amount) VALUES (?, ?, 'offer', ?)"
+            );
+            $stmt->execute([$nego_id, $buyer_id, $offer]);
+
+            $pdo->commit();
 
             sendResponse([
                 'success'        => true,
                 'message'        => "Votre offre de " . number_format($offer, 2, ',', ' ') . " € a été envoyée au vendeur.",
-                'negotiation_id' => $pdo->lastInsertId()
+                'negotiation_id' => $nego_id
             ]);
         } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            sendResponse(['error' => 'Erreur serveur.'], 500);
+        }
+        break;
+
+    case 'my_negotiations':
+        $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+        if (!$user_id) {
+            sendResponse(['error' => 'Utilisateur non spécifié.'], 400);
+        }
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT n.id, n.status, n.last_offer, n.created_at,
+                        i.name AS item_name, i.price AS item_price,
+                        ub.username AS buyer_username,
+                        us.username AS seller_username,
+                        CASE WHEN n.buyer_id = ? THEN 'buyer' ELSE 'seller' END AS my_role
+                 FROM negotiations n
+                 JOIN items i  ON n.item_id  = i.id
+                 JOIN users ub ON n.buyer_id  = ub.id
+                 JOIN users us ON i.seller_id = us.id
+                 WHERE n.buyer_id = ? OR i.seller_id = ?
+                 ORDER BY n.created_at DESC"
+            );
+            $stmt->execute([$user_id, $user_id, $user_id]);
+            sendResponse($stmt->fetchAll());
+        } catch (PDOException $e) {
+            sendResponse(['error' => 'Erreur BDD.'], 500);
+        }
+        break;
+
+    case 'get_negotiation':
+        $nego_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$nego_id) {
+            sendResponse(['error' => 'ID non spécifié.'], 400);
+        }
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT n.*,
+                        i.name AS item_name, i.price AS item_price, i.image_url, i.seller_id,
+                        ub.username AS buyer_username,
+                        us.username AS seller_username
+                 FROM negotiations n
+                 JOIN items i  ON n.item_id  = i.id
+                 JOIN users ub ON n.buyer_id  = ub.id
+                 JOIN users us ON i.seller_id = us.id
+                 WHERE n.id = ?"
+            );
+            $stmt->execute([$nego_id]);
+            $nego = $stmt->fetch();
+            if (!$nego) {
+                sendResponse(['error' => 'Négociation introuvable.'], 404);
+            }
+
+            $stmt = $pdo->prepare(
+                "SELECT nm.*, u.username AS sender_username
+                 FROM negotiation_messages nm
+                 JOIN users u ON nm.sender_id = u.id
+                 WHERE nm.negotiation_id = ?
+                 ORDER BY nm.created_at ASC"
+            );
+            $stmt->execute([$nego_id]);
+            $nego['messages']       = $stmt->fetchAll();
+            $nego['exchange_count'] = count($nego['messages']);
+
+            sendResponse($nego);
+        } catch (PDOException $e) {
+            sendResponse(['error' => 'Erreur BDD.'], 500);
+        }
+        break;
+
+    case 'reply_negotiation':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        $input   = json_decode(file_get_contents('php://input'), true);
+        $nego_id = isset($input['negotiation_id']) ? (int)$input['negotiation_id'] : 0;
+        $user_id = isset($input['user_id'])        ? (int)$input['user_id']        : 0;
+        $action  = $input['action']  ?? '';
+        $amount  = isset($input['amount'])  && $input['amount'] !== null ? (float)$input['amount']  : null;
+        $message = isset($input['message']) && trim($input['message']) !== '' ? trim($input['message']) : null;
+
+        if (!$nego_id || !$user_id || !in_array($action, ['accept', 'reject', 'counter'])) {
+            sendResponse(['error' => 'Données incomplètes.'], 400);
+        }
+        if ($action === 'counter' && ($amount === null || $amount <= 0)) {
+            sendResponse(['error' => 'Montant requis pour une contre-offre.'], 400);
+        }
+
+        try {
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare(
+                "SELECT n.*, i.seller_id
+                 FROM negotiations n
+                 JOIN items i ON n.item_id = i.id
+                 WHERE n.id = ? FOR UPDATE"
+            );
+            $stmt->execute([$nego_id]);
+            $nego = $stmt->fetch();
+
+            if (!$nego) {
+                $pdo->rollBack();
+                sendResponse(['error' => 'Négociation introuvable.'], 404);
+            }
+            if ($nego['status'] !== 'pending') {
+                $pdo->rollBack();
+                sendResponse(['error' => 'Cette négociation est déjà clôturée.'], 400);
+            }
+            if ($user_id !== (int)$nego['buyer_id'] && $user_id !== (int)$nego['seller_id']) {
+                $pdo->rollBack();
+                sendResponse(['error' => 'Accès non autorisé.'], 403);
+            }
+
+            // Vérification du tour et du compteur d'échanges
+            $stmt = $pdo->prepare(
+                "SELECT id, sender_id FROM negotiation_messages
+                 WHERE negotiation_id = ? ORDER BY created_at DESC LIMIT 1"
+            );
+            $stmt->execute([$nego_id]);
+            $last_msg = $stmt->fetch();
+
+            if ($last_msg && (int)$last_msg['sender_id'] === $user_id) {
+                $pdo->rollBack();
+                sendResponse(['error' => "Ce n'est pas encore votre tour de répondre."], 400);
+            }
+
+            $stmt = $pdo->prepare(
+                "SELECT COUNT(*) AS cnt FROM negotiation_messages WHERE negotiation_id = ?"
+            );
+            $stmt->execute([$nego_id]);
+            $exchange_count = (int)$stmt->fetch()['cnt'];
+
+            if ($action === 'counter' && $exchange_count >= 5) {
+                $pdo->rollBack();
+                sendResponse(['error' => "Limite de 5 échanges atteinte. Vous devez accepter ou refuser."], 400);
+            }
+
+            // Insérer le message
+            $stmt = $pdo->prepare(
+                "INSERT INTO negotiation_messages (negotiation_id, sender_id, type, amount, message)
+                 VALUES (?, ?, ?, ?, ?)"
+            );
+            $stmt->execute([$nego_id, $user_id, $action, $amount, $message]);
+
+            // Mettre à jour le statut de la négociation
+            $new_status  = $action === 'accept' ? 'accepted' : ($action === 'reject' ? 'rejected' : 'pending');
+            $new_offer   = $action === 'counter' ? $amount : $nego['last_offer'];
+
+            $stmt = $pdo->prepare("UPDATE negotiations SET status = ?, last_offer = ? WHERE id = ?");
+            $stmt->execute([$new_status, $new_offer, $nego_id]);
+
+            // Si acceptation, marquer l'article comme vendu
+            if ($action === 'accept') {
+                $stmt = $pdo->prepare("UPDATE items SET status = 'sold' WHERE id = ?");
+                $stmt->execute([$nego['item_id']]);
+            }
+
+            $pdo->commit();
+
+            $msg_map = [
+                'accept'  => 'Négociation acceptée ! L\'article est maintenant marqué comme vendu.',
+                'reject'  => 'Négociation refusée.',
+                'counter' => "Contre-offre de " . number_format($amount, 2, ',', ' ') . " € envoyée."
+            ];
+            sendResponse([
+                'success'        => true,
+                'message'        => $msg_map[$action],
+                'new_status'     => $new_status,
+                'exchange_count' => $exchange_count + 1
+            ]);
+        } catch (PDOException $e) {
+            $pdo->rollBack();
             sendResponse(['error' => 'Erreur serveur.'], 500);
         }
         break;

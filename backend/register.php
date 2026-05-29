@@ -18,8 +18,7 @@ if (
     !empty($data->prenom) &&
     !empty($data->username) &&
     !empty($data->email) &&
-    !empty($data->password) &&
-    !empty($data->role)
+    !empty($data->password)
 ) {
     // Validation de l'email
     if (!filter_var($data->email, FILTER_VALIDATE_EMAIL)) {
@@ -47,18 +46,17 @@ if (
         $hashed_password = password_hash($data->password, PASSWORD_BCRYPT);
 
         // Insertion dans la base de données via requête préparée
-        $query = "INSERT INTO users (nom, prenom, username, email, password, role) 
-                  VALUES (:nom, :prenom, :username, :email, :password, :role)";
-        
+        $query = "INSERT INTO users (nom, prenom, username, email, password)
+                  VALUES (:nom, :prenom, :username, :email, :password)";
+
         $stmt = $pdo->prepare($query);
 
         if ($stmt->execute([
-            ':nom' => $data->nom,
-            ':prenom' => $data->prenom,
+            ':nom'      => $data->nom,
+            ':prenom'   => $data->prenom,
             ':username' => $data->username,
-            ':email' => $data->email,
-            ':password' => $hashed_password,
-            ':role' => $data->role
+            ':email'    => $data->email,
+            ':password' => $hashed_password
         ])) {
             http_response_code(201);
             echo json_encode(["message" => "Utilisateur créé avec succès."]);
