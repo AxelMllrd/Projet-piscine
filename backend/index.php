@@ -25,6 +25,20 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS negotiation_messages (
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+$pdo->exec("CREATE TABLE IF NOT EXISTS notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    message TEXT NOT NULL,
+    is_read TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+function addNotification(PDO $pdo, int $user_id, string $message): void {
+    $stmt = $pdo->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
+    $stmt->execute([$user_id, $message]);
+}
+
 // Routeur basique
 $action = isset($_GET['action']) ? $_GET['action'] : 'status';
 
@@ -118,7 +132,7 @@ switch ($action) {
         }
 
         try {
-            $stmt = $pdo->prepare("SELECT seller_id FROM items WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, name, seller_id FROM items WHERE id = ?");
             $stmt->execute([$item_id]);
             $item_row = $stmt->fetch();
             if ($item_row && (int)$item_row['seller_id'] === $user_id) {
@@ -128,7 +142,7 @@ switch ($action) {
             $pdo->beginTransaction();
 
             $stmt = $pdo->prepare(
-                "SELECT id, current_bid, status FROM auctions WHERE item_id = ? FOR UPDATE"
+                "SELECT id, current_bid, highest_bidder_id, status FROM auctions WHERE item_id = ? FOR UPDATE"
             );
             $stmt->execute([$item_id]);
             $auction = $stmt->fetch();
@@ -161,6 +175,13 @@ switch ($action) {
 
             $pdo->commit();
 
+            // Notifier l'ancien meilleur enchérisseur s'il existe et n'est pas le nouvel enchérisseur
+            $prev_bidder = $auction['highest_bidder_id'] ? (int)$auction['highest_bidder_id'] : null;
+            if ($prev_bidder && $prev_bidder !== $user_id) {
+                $item_name = $item_row['name'] ?? 'un article';
+                addNotification($pdo, $prev_bidder, "Vous avez été dépassé sur l'enchère \"{$item_name}\" — nouvelle offre : " . number_format($amount, 2, ',', ' ') . " €.");
+            }
+
             sendResponse([
                 'success' => true,
                 'message' => "Enchère de " . number_format($amount, 2, ',', ' ') . " € placée avec succès !",
@@ -185,7 +206,7 @@ switch ($action) {
         }
 
         try {
-            $stmt = $pdo->prepare("SELECT id, status, seller_id FROM items WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, name, status, seller_id FROM items WHERE id = ?");
             $stmt->execute([$item_id]);
             $item = $stmt->fetch();
 
@@ -201,6 +222,8 @@ switch ($action) {
 
             $stmt = $pdo->prepare("UPDATE items SET status = 'sold' WHERE id = ?");
             $stmt->execute([$item_id]);
+
+            addNotification($pdo, (int)$item['seller_id'], "Votre article \"{$item['name']}\" a été acheté !");
 
             sendResponse([
                 'success' => true,
@@ -224,7 +247,7 @@ switch ($action) {
             sendResponse(['error' => 'Données incomplètes.'], 400);
         }
         try {
-            $stmt = $pdo->prepare("SELECT id, sale_type, status, seller_id FROM items WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT id, name, sale_type, status, seller_id FROM items WHERE id = ?");
             $stmt->execute([$item_id]);
             $item = $stmt->fetch();
 
@@ -261,6 +284,8 @@ switch ($action) {
             $stmt->execute([$nego_id, $buyer_id, $offer]);
 
             $pdo->commit();
+
+            addNotification($pdo, (int)$item['seller_id'], "Nouvelle offre de " . number_format($offer, 2, ',', ' ') . " € pour votre article \"{$item['name']}\".");
 
             sendResponse([
                 'success'        => true,
@@ -361,7 +386,7 @@ switch ($action) {
             $pdo->beginTransaction();
 
             $stmt = $pdo->prepare(
-                "SELECT n.*, i.seller_id
+                "SELECT n.*, i.seller_id, i.name AS item_name
                  FROM negotiations n
                  JOIN items i ON n.item_id = i.id
                  WHERE n.id = ? FOR UPDATE"
@@ -428,6 +453,16 @@ switch ($action) {
 
             $pdo->commit();
 
+            // Notifier l'autre partie
+            $other_id   = ($user_id === (int)$nego['buyer_id']) ? (int)$nego['seller_id'] : (int)$nego['buyer_id'];
+            $item_name  = $nego['item_name'] ?? 'un article';
+            $notif_msgs = [
+                'accept'  => "Votre négociation pour l'article \"{$item_name}\" a été acceptée !",
+                'reject'  => "Votre négociation pour l'article \"{$item_name}\" a été refusée.",
+                'counter' => "Nouvelle contre-offre de " . number_format($amount, 2, ',', ' ') . " € pour l'article \"{$item_name}\"."
+            ];
+            addNotification($pdo, $other_id, $notif_msgs[$action]);
+
             $msg_map = [
                 'accept'  => 'Négociation acceptée ! L\'article est maintenant marqué comme vendu.',
                 'reject'  => 'Négociation refusée.',
@@ -442,6 +477,48 @@ switch ($action) {
         } catch (PDOException $e) {
             $pdo->rollBack();
             sendResponse(['error' => 'Erreur serveur.'], 500);
+        }
+        break;
+
+    case 'get_notifications':
+        $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+        if (!$user_id) {
+            sendResponse(['error' => 'Utilisateur non spécifié.'], 400);
+        }
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT id, message, is_read, created_at FROM notifications
+                 WHERE user_id = ? ORDER BY created_at DESC LIMIT 30"
+            );
+            $stmt->execute([$user_id]);
+            $notifications = $stmt->fetchAll();
+
+            $unread = 0;
+            foreach ($notifications as $n) {
+                if (!(int)$n['is_read']) $unread++;
+            }
+
+            sendResponse(['notifications' => $notifications, 'unread' => $unread]);
+        } catch (PDOException $e) {
+            sendResponse(['error' => 'Erreur BDD.'], 500);
+        }
+        break;
+
+    case 'mark_notifications_read':
+        $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+        if (!$user_id && $_SERVER['REQUEST_METHOD'] === 'POST') {
+            $input   = json_decode(file_get_contents('php://input'), true);
+            $user_id = isset($input['user_id']) ? (int)$input['user_id'] : 0;
+        }
+        if (!$user_id) {
+            sendResponse(['error' => 'Utilisateur non spécifié.'], 400);
+        }
+        try {
+            $stmt = $pdo->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ?");
+            $stmt->execute([$user_id]);
+            sendResponse(['success' => true]);
+        } catch (PDOException $e) {
+            sendResponse(['error' => 'Erreur BDD.'], 500);
         }
         break;
 

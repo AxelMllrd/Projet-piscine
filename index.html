@@ -270,6 +270,63 @@
 
         /* Footer */
         .app-footer { text-align: center; padding: 40px; color: var(--text-muted); font-size: 0.9rem; }
+
+        /* --- Notifications --- */
+        .notif-wrapper { position: relative; }
+        .notif-badge {
+            display: none;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger-red);
+            color: white;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            align-items: center;
+            justify-content: center;
+            padding: 0 3px;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+        .notif-badge.visible { display: flex; }
+        .notif-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 320px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+            z-index: 2000;
+            overflow: hidden;
+        }
+        .notif-dropdown.open { display: block; }
+        .notif-dropdown-header {
+            padding: 14px 18px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--primary-blue);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .notif-list { max-height: 360px; overflow-y: auto; }
+        .notif-item {
+            padding: 12px 18px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item.unread { background: #f0f7ff; }
+        .notif-time { font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; }
+        .notif-empty { padding: 30px; text-align: center; color: var(--text-muted); font-size: 0.88rem; }
     </style>
 </head>
 <body>
@@ -284,7 +341,20 @@
         </div>
         <div class="header-right">
             <button class="btn-vendre" onclick="handleVendreClick()"><i class="fa-solid fa-plus-circle"></i> Vendre</button>
-            <div class="icon-btn"><i class="fa-regular fa-bell"></i></div>
+            <div class="notif-wrapper">
+                <div class="icon-btn" id="bell-btn" onclick="toggleNotifications()">
+                    <i class="fa-regular fa-bell"></i>
+                </div>
+                <span class="notif-badge" id="notif-badge"></span>
+                <div class="notif-dropdown" id="notif-dropdown">
+                    <div class="notif-dropdown-header">
+                        <i class="fa-regular fa-bell"></i> Notifications
+                    </div>
+                    <div class="notif-list" id="notif-list">
+                        <div class="notif-empty">Connectez-vous pour voir vos notifications.</div>
+                    </div>
+                </div>
+            </div>
             <div class="icon-btn" onclick="showView('catalogue')"><i class="fa-solid fa-cart-shopping"></i></div>
             <div class="icon-btn" id="profile-btn" onclick="handleProfileClick()"><i class="fa-regular fa-user"></i></div>
         </div>
@@ -674,6 +744,7 @@
                     currentUser = data.user;
                     document.getElementById('profile-btn').innerHTML = '<i class="fa-solid fa-user-check" style="color:var(--success-green)"></i>';
                     await updateDashboard();
+                    await fetchNotifications();
                     showView('home');
                     alert('Connexion réussie ! Bienvenue ' + currentUser.username);
                 } else {
@@ -799,6 +870,9 @@
             isLoggedIn = false;
             currentUser = null;
             document.getElementById('profile-btn').innerHTML = '<i class="fa-regular fa-user"></i>';
+            document.getElementById('notif-badge').classList.remove('visible');
+            document.getElementById('notif-list').innerHTML = '<div class="notif-empty">Connectez-vous pour voir vos notifications.</div>';
+            document.getElementById('notif-dropdown').classList.remove('open');
             showView('home');
             alert('Vous avez été déconnecté.');
         }
@@ -1002,6 +1076,7 @@
                     // Mettre à jour le handler avec le nouveau prix courant
                     document.getElementById('btn-place-bid').onclick = () => handlePlaceBid(itemId, amount);
                     showBidFeedback(data.message || 'Enchère placée !', false);
+                    fetchNotifications();
                 } else {
                     showBidFeedback(data.error || 'Erreur lors de la soumission.');
                 }
@@ -1033,6 +1108,7 @@
 
                 if (response.ok && data.success) {
                     alert(data.message || 'Achat confirmé !');
+                    fetchNotifications();
                     showView('catalogue');
                 } else {
                     alert(data.error || "Erreur lors de l'achat.");
@@ -1072,6 +1148,7 @@
                 });
                 const data = await response.json();
                 if (response.ok && data.success) {
+                    fetchNotifications();
                     showView('negotiation');
                     await loadNegotiation(data.negotiation_id);
                 } else {
@@ -1265,6 +1342,7 @@
                 });
                 const data = await response.json();
                 if (response.ok && data.success) {
+                    fetchNotifications();
                     await loadNegotiation(currentNegoId);
                 } else {
                     alert(data.error || 'Erreur.');
@@ -1364,6 +1442,62 @@
         }
 
         showView('home');
+
+        // ===== NOTIFICATIONS =====
+
+        async function fetchNotifications() {
+            if (!isLoggedIn || !currentUser) return;
+            try {
+                const res = await fetch(`backend/index.php?action=get_notifications&user_id=${currentUser.id}`);
+                const data = await res.json();
+                const badge = document.getElementById('notif-badge');
+                if (data.unread > 0) {
+                    badge.textContent = data.unread > 9 ? '9+' : data.unread;
+                    badge.classList.add('visible');
+                } else {
+                    badge.classList.remove('visible');
+                }
+                renderNotifications(data.notifications || []);
+            } catch (e) {
+                console.error('Erreur notifications:', e);
+            }
+        }
+
+        function renderNotifications(notifs) {
+            const list = document.getElementById('notif-list');
+            if (!notifs || notifs.length === 0) {
+                list.innerHTML = '<div class="notif-empty">Aucune notification pour le moment.</div>';
+                return;
+            }
+            list.innerHTML = notifs.map(n => {
+                const timeStr = new Date(n.created_at).toLocaleString('fr-FR');
+                return `
+                    <div class="notif-item${!parseInt(n.is_read) ? ' unread' : ''}">
+                        <div>${escapeHtml(n.message)}</div>
+                        <div class="notif-time">${timeStr}</div>
+                    </div>`;
+            }).join('');
+        }
+
+        async function toggleNotifications() {
+            const dropdown = document.getElementById('notif-dropdown');
+            const isOpen = dropdown.classList.contains('open');
+            dropdown.classList.toggle('open', !isOpen);
+            if (!isOpen && isLoggedIn && currentUser) {
+                document.getElementById('notif-badge').classList.remove('visible');
+                fetch(`backend/index.php?action=mark_notifications_read&user_id=${currentUser.id}`);
+                await fetchNotifications();
+            }
+        }
+
+        // Fermer le dropdown au clic extérieur
+        document.addEventListener('click', function(e) {
+            const wrapper = document.querySelector('.notif-wrapper');
+            const dropdown = document.getElementById('notif-dropdown');
+            if (wrapper && !wrapper.contains(e.target) && dropdown.classList.contains('open')) {
+                dropdown.classList.remove('open');
+            }
+        });
     </script>
 </body>
 </html>
