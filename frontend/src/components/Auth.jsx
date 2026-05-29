@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Auth.jsx - Composant d'Authentification (Inscription & Connexion)
  * Pour la Marketplace Mercato Nova
  */
 const Auth = () => {
+    const { login } = useAuth();
     const [isLogin, setIsLogin] = useState(true);
     const [errors, setErrors] = useState({});
     const [successMessage, setMessage] = useState('');
@@ -74,8 +76,8 @@ const Auth = () => {
             });
             const result = await response.json();
             if (response.ok) {
+                login(result.user);
                 alert(`Bienvenue ${result.user.username} (${result.user.role})`);
-                // Redirection ou mise à jour du contexte ici
             } else {
                 setErrors({ login: result.message });
             }
