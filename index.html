@@ -51,7 +51,9 @@
         .search-container { flex: 1; max-width: 600px; margin: 0 40px; }
         .search-bar { width: 100%; padding: 10px 15px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; }
 
-        .header-right { display: flex; gap: 15px; }
+        .header-right { display: flex; gap: 15px; align-items: center; }
+        .btn-vendre { background: var(--accent-orange); color: white; border: none; padding: 8px 15px; border-radius: 20px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; transition: transform 0.2s; }
+        .btn-vendre:hover { transform: scale(1.05); background: #e67e22; }
         .icon-btn { background-color: #f8f9fa; border: 1px solid var(--border-color); color: var(--text-muted); width: 40px; height: 40px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
         .icon-btn:hover { background-color: #e9ecef; color: var(--primary-blue); }
 
@@ -61,6 +63,20 @@
         .auth-form input:focus { border-color: var(--secondary-blue); outline: none; }
         .auth-toggle { text-align: center; color: var(--secondary-blue); cursor: pointer; font-size: 0.9rem; margin-top: 15px; font-weight: 500; }
         .auth-toggle:hover { text-decoration: underline; }
+
+        /* --- Create Ad Specifics --- */
+        .create-ad-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .form-section { background: white; padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .form-section h3 { margin-top: 0; border-bottom: 2px solid var(--bg-light); padding-bottom: 10px; color: var(--primary-blue); }
+        .upload-box { border: 2px dashed var(--secondary-blue); border-radius: 8px; padding: 40px; text-align: center; background: #f8fbff; cursor: pointer; position: relative; }
+        .upload-box input { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
+        .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 20px; }
+        .preview-item { width: 100%; height: 100px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
+        .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+        .price-input-wrapper { position: relative; max-width: 200px; }
+        .price-input-wrapper span { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); font-weight: bold; }
 
         .dashboard-container { max-width: 900px; margin: 40px auto; background: white; border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
         .dashboard-header { 
@@ -267,6 +283,7 @@
             <input type="text" class="search-bar" placeholder="Rechercher du matériel nautique...">
         </div>
         <div class="header-right">
+            <button class="btn-vendre" onclick="handleVendreClick()"><i class="fa-solid fa-plus-circle"></i> Vendre</button>
             <div class="icon-btn"><i class="fa-regular fa-bell"></i></div>
             <div class="icon-btn" onclick="showView('catalogue')"><i class="fa-solid fa-cart-shopping"></i></div>
             <div class="icon-btn" id="profile-btn" onclick="handleProfileClick()"><i class="fa-regular fa-user"></i></div>
@@ -316,6 +333,86 @@
                     </div>
                     <div class="products-grid" id="products-grid"></div>
                 </section>
+            </div>
+        </div>
+
+        <!-- Create Ad View -->
+        <div id="create-ad-view" class="view">
+            <div class="create-ad-container">
+                <h2 style="text-align:center; color:var(--primary-blue); margin-bottom:30px;">Vendre un article</h2>
+                <form id="create-ad-form" onsubmit="handleCreateAd(event)">
+                    <div class="form-section">
+                        <h3>1. Photos</h3>
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:15px;">Ajoutez au moins une photo pour illustrer votre matériel.</p>
+                        <div class="upload-box">
+                            <i class="fa-solid fa-camera" style="font-size:2rem; color:var(--secondary-blue); display:block; margin-bottom:10px;"></i>
+                            <span style="font-weight:700; color:var(--secondary-blue);">Cliquez pour ajouter des photos</span>
+                            <input type="file" id="ad-images" name="images[]" multiple accept="image/*" onchange="previewImages(event)">
+                        </div>
+                        <div id="image-previews" class="preview-grid"></div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>2. Détails</h3>
+                        <div class="input-group">
+                            <label>Titre de l'annonce</label>
+                            <input type="text" id="ad-titre" name="titre" placeholder="ex: Planche de Wingfoil 110L" required minlength="5">
+                        </div>
+                        <div class="input-group">
+                            <label>Description</label>
+                            <textarea id="ad-desc" name="description" rows="5" placeholder="Décrivez l'état, l'usure, les accessoires inclus..." required></textarea>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                            <div class="input-group">
+                                <label>Catégorie</label>
+                                <select id="ad-cat" name="categorie">
+                                    <option>Wingfoil</option>
+                                    <option>Kitesurf</option>
+                                    <option>Accessoire</option>
+                                    <option>Néoprène</option>
+                                    <option>Planche à voile</option>
+                                    <option>Pièce détachée</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>État</label>
+                                <select id="ad-etat" name="etat">
+                                    <option>Neuf</option>
+                                    <option>Très bon état</option>
+                                    <option>Bon état</option>
+                                    <option>Satisfaisant</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>3. Prix et Vente</h3>
+                        <div class="input-group">
+                            <label>Type de vente</label>
+                            <div style="display:flex; gap:20px; margin-top:10px;">
+                                <label style="display:flex; align-items:center; gap:8px; font-weight:normal; cursor:pointer;">
+                                    <input type="radio" name="type_vente" value="Achat immédiat" checked style="width:auto;"> Achat immédiat
+                                </label>
+                                <label style="display:flex; align-items:center; gap:8px; font-weight:normal; cursor:pointer;">
+                                    <input type="radio" name="type_vente" value="Enchère" style="width:auto;"> Enchère
+                                </label>
+                                <label style="display:flex; align-items:center; gap:8px; font-weight:normal; cursor:pointer;">
+                                    <input type="radio" name="type_vente" value="Négociation" style="width:auto;"> Négociation
+                                </label>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Prix</label>
+                            <div class="price-input-wrapper">
+                                <input type="number" id="ad-prix" name="prix" step="0.01" placeholder="0.00" required min="0.01">
+                                <span>€</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-action btn-buy" style="padding:18px; font-size:1.1rem;">Publier l'annonce</button>
+                </form>
             </div>
         </div>
 
@@ -547,6 +644,74 @@
             }
         }
 
+        function handleVendreClick() {
+            if (!isLoggedIn) {
+                alert("Vous devez être connecté pour publier une annonce.");
+                showView('auth');
+            } else {
+                showView('create-ad');
+            }
+        }
+
+        function previewImages(event) {
+            const grid = document.getElementById('image-previews');
+            grid.innerHTML = '';
+            const files = event.target.files;
+            
+            for (const file of files) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-item';
+                    grid.appendChild(img);
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleCreateAd(event) {
+            event.preventDefault();
+            
+            if (!isLoggedIn) {
+                alert("Session expirée. Veuillez vous reconnecter.");
+                return;
+            }
+
+            const form = event.target;
+            const formData = new FormData(form);
+            formData.append('user_id', currentUser.id);
+
+            // Validation des fichiers
+            const files = document.getElementById('ad-images').files;
+            if (files.length === 0) {
+                alert("Veuillez ajouter au moins une photo.");
+                return;
+            }
+
+            try {
+                const response = await fetch('backend/create_ad.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("Annonce publiée avec succès !");
+                    form.reset();
+                    document.getElementById('image-previews').innerHTML = '';
+                    await updateDashboard();
+                    showView('dashboard');
+                } else {
+                    alert(data.message || "Erreur lors de la publication.");
+                }
+            } catch (error) {
+                console.error("Erreur publication:", error);
+                alert("Erreur de connexion au serveur.");
+            }
+        }
+
         function toggleAuth(showLogin) {
             document.getElementById('login-form').style.display = showLogin ? 'block' : 'none';
             document.getElementById('register-form').style.display = showLogin ? 'none' : 'block';
@@ -683,6 +848,9 @@
                     document.getElementById('bc-cat').innerText = 'Mes négociations';
                     document.getElementById('bc-prod').innerText = 'Planche wingfoil Duotone';
                     document.getElementById('bc-prod').style.display = 'inline';
+                } else if (viewId === 'create-ad') {
+                    document.getElementById('bc-cat').innerText = 'Vendre';
+                    document.getElementById('bc-prod').style.display = 'none';
                 }
             }
             window.scrollTo(0, 0);

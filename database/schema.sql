@@ -56,6 +56,22 @@ CREATE TABLE IF NOT EXISTS bids (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Table des ANNONCES (Version demandée par l'utilisateur)
+CREATE TABLE IF NOT EXISTS ANNONCE (
+    ID INT AUTO_INCREMENT PRIMARY KEY,
+    Utilisateur_ID INT NOT NULL,
+    Titre VARCHAR(255) NOT NULL,
+    Description TEXT NOT NULL,
+    Categorie ENUM('Wingfoil', 'Kitesurf', 'Accessoire', 'Néoprène', 'Planche à voile', 'Pièce détachée') NOT NULL,
+    Etat ENUM('Neuf', 'Très bon état', 'Bon état', 'Satisfaisant') NOT NULL,
+    Type_de_vente ENUM('Achat immédiat', 'Enchère', 'Négociation') NOT NULL,
+    Prix DECIMAL(10, 2) NOT NULL,
+    Images JSON, -- Pour stocker un tableau de chemins de fichiers
+    Date_publication TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Utilisateur_ID) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
 -- Table des négociations
 CREATE TABLE IF NOT EXISTS negotiations (
     id INT AUTO_INCREMENT PRIMARY KEY,
