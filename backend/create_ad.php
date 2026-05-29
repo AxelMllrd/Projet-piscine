@@ -140,9 +140,17 @@ try {
     if ($type_vente === 'Enchère') {
         $stmt_auction = $pdo->prepare(
             "INSERT INTO auctions (item_id, starting_price, current_bid, end_time)
-             VALUES (?, ?, ?, ?)"
+             VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 7 DAY))"
         );
+<<<<<<< HEAD
         $stmt_auction->execute([$item_id, 1.00, 1.00, $db_date_fin_enchere]);
+=======
+        $stmt->execute([
+            $item_id,
+            $prix,
+            $prix,
+        ]);
+>>>>>>> 22c7da7ab9298a22eddf1ece831c37bb719e6b40
     }
 
     http_response_code(201);

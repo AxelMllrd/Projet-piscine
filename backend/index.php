@@ -16,6 +16,37 @@ require_once 'notifications_functions.php';
 // Suppression de l'ancienne table notifications car on utilise la nouvelle NOTIFICATION
 // $pdo->exec("CREATE TABLE IF NOT EXISTS notifications (...)"); 
 
+function closeAuctionIfEnded(PDO $pdo, array $auction): array {
+    if ($auction['status'] !== 'active') return $auction;
+    if (strtotime($auction['end_time']) > time()) return $auction;
+
+    try {
+        $pdo->beginTransaction();
+
+        $stmt = $pdo->prepare("UPDATE auctions SET status = 'ended' WHERE id = ? AND status = 'active'");
+        $stmt->execute([(int)$auction['id']]);
+
+        if ((int)($auction['highest_bidder_id'] ?? 0) > 0) {
+            $stmt = $pdo->prepare("UPDATE items SET status = 'sold' WHERE id = ? AND status = 'active'");
+            $stmt->execute([(int)$auction['item_id']]);
+
+            addNotification(
+                $pdo,
+                (int)$auction['highest_bidder_id'],
+                "Félicitations ! Vous avez remporté l'enchère pour \"{$auction['item_name']}\" avec une offre de "
+                . number_format((float)$auction['current_bid'], 2, ',', ' ') . " €."
+            );
+        }
+
+        $pdo->commit();
+        $auction['status'] = 'ended';
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+    }
+
+    return $auction;
+}
+
 // Routeur basique
 $action = isset($_GET['action']) ? $_GET['action'] : 'status';
 
@@ -73,9 +104,23 @@ switch ($action) {
             if (!$item) {
                 sendResponse(['error' => 'Annonce introuvable.'], 404);
             }
+<<<<<<< HEAD
             
             if (isset($item['Images']) && is_string($item['Images'])) {
                 $item['Images'] = json_decode($item['Images'], true);
+=======
+            if ($item['sale_type'] === 'auction') {
+                $stmt = $pdo->prepare(
+                    "SELECT id, item_id, current_bid, end_time, status, highest_bidder_id FROM auctions WHERE item_id = ?"
+                );
+                $stmt->execute([$id]);
+                $auction_row = $stmt->fetch();
+                if ($auction_row) {
+                    $auction_row['item_name'] = $item['name'];
+                    $auction_row = closeAuctionIfEnded($pdo, $auction_row);
+                    $item['auction'] = $auction_row;
+                }
+>>>>>>> 22c7da7ab9298a22eddf1ece831c37bb719e6b40
             }
             
             sendResponse($item);
@@ -116,7 +161,20 @@ switch ($action) {
             foreach ($purchases as &$p) {
                 if (isset($p['Images'])) $p['Images'] = json_decode($p['Images'], true);
             }
+<<<<<<< HEAD
             sendResponse($purchases);
+=======
+            $auction = closeAuctionIfEnded($pdo, $auction);
+            $stmt = $pdo->prepare(
+                "SELECT b.amount, b.bid_time, u.username
+                 FROM bids b JOIN users u ON b.user_id = u.id
+                 WHERE b.auction_id = ?
+                 ORDER BY b.bid_time DESC LIMIT 10"
+            );
+            $stmt->execute([$auction['id']]);
+            $auction['history'] = $stmt->fetchAll();
+            sendResponse($auction);
+>>>>>>> 22c7da7ab9298a22eddf1ece831c37bb719e6b40
         } catch (PDOException $e) {
             sendResponse(['error' => $e->getMessage()], 500);
         }
@@ -160,6 +218,7 @@ switch ($action) {
 
             $pdo->beginTransaction();
 
+<<<<<<< HEAD
             // On récupère le dernier enchérisseur pour le notifier
             $stmt = $pdo->prepare("SELECT user_id FROM bids WHERE ad_id = ? ORDER BY amount DESC LIMIT 1");
             $stmt->execute([$ad_id]);
@@ -168,6 +227,33 @@ switch ($action) {
             // Mise à jour de l'annonce avec le nouveau prix
             $stmt = $pdo->prepare("UPDATE ANNONCE SET Prix = ? WHERE ID = ?");
             $stmt->execute([$amount, $ad_id]);
+=======
+            $stmt = $pdo->prepare(
+                "SELECT id, current_bid, highest_bidder_id, status, end_time FROM auctions WHERE item_id = ? FOR UPDATE"
+            );
+            $stmt->execute([$item_id]);
+            $auction = $stmt->fetch();
+
+            if (!$auction) {
+                $pdo->rollBack();
+                sendResponse(['error' => 'Enchère introuvable pour cet article.'], 404);
+            }
+            if ($auction['status'] !== 'active') {
+                $pdo->rollBack();
+                sendResponse(['error' => "L'enchère est terminée."], 400);
+            }
+            if (strtotime($auction['end_time']) <= time()) {
+                $pdo->rollBack();
+                sendResponse(['error' => "L'enchère est terminée."], 403);
+            }
+            if ($amount <= (float)$auction['current_bid']) {
+                $pdo->rollBack();
+                sendResponse([
+                    'error' => "L'offre doit être strictement supérieure à l'enchère actuelle de "
+                               . number_format($auction['current_bid'], 2, ',', ' ') . " €."
+                ], 400);
+            }
+>>>>>>> 22c7da7ab9298a22eddf1ece831c37bb719e6b40
 
             // Enregistrement de l'enchère dans l'historique
             $stmt = $pdo->prepare("INSERT INTO bids (ad_id, user_id, amount) VALUES (?, ?, ?)");
