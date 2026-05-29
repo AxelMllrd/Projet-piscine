@@ -1303,7 +1303,7 @@
                     <button class="btn-nego btn-accept" onclick="submitNegoReply('accept')">
                         Accepter${lastOffer ? ' (' + lastOffer + ' €)' : ''}
                     </button>
-                    <button class="btn-nego btn-counter" style="${cntStyle}" onclick="toggleCounterInput()" ${atLimit ? 'disabled' : ''}>
+                    <button class="btn-nego btn-counter" id="btn-counter-toggle" style="${cntStyle}" onclick="toggleCounterInput(this)" ${atLimit ? 'disabled' : ''}>
                         Contre-offre
                     </button>
                     <button class="btn-nego btn-refuse" onclick="submitNegoReply('reject')">Refuser</button>
@@ -1312,12 +1312,25 @@
                 <p style="text-align:center;font-size:0.75rem;color:#888;margin-top:12px;">Échange ${exchangeCount} / 5</p>`;
         }
 
-        function toggleCounterInput() {
+        function toggleCounterInput(btn) {
             const div = document.getElementById('nego-counter-input');
             if (!div) return;
             const show = div.style.display === 'none';
             div.style.display = show ? 'block' : 'none';
-            if (show) document.getElementById('nego-counter-amount')?.focus();
+            if (show) {
+                document.getElementById('nego-counter-amount')?.focus();
+                if (btn) {
+                    btn.textContent = "Envoyer l'offre";
+                    btn.onclick = () => submitNegoReply('counter');
+                    btn.classList.replace('btn-counter', 'btn-accept');
+                }
+            } else {
+                if (btn) {
+                    btn.textContent = 'Contre-offre';
+                    btn.onclick = () => toggleCounterInput(btn);
+                    btn.classList.replace('btn-accept', 'btn-counter');
+                }
+            }
         }
 
         async function submitNegoReply(action) {
