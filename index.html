@@ -539,18 +539,7 @@
                         <div class="dashboard-card">
                             <div class="card-header"><i class="fa-solid fa-clock-rotate-left"></i> Activité Récente</div>
                             <ul class="activity-list" id="activity-list">
-                                <li class="activity-item">
-                                    <span>Enchère placée sur <strong>Voile North</strong></span>
-                                    <span class="activity-date">Il y a 2h</span>
-                                </li>
-                                <li class="activity-item">
-                                    <span>Achat de <strong>Aileron Carbone</strong></span>
-                                    <span class="activity-date">Hier</span>
-                                </li>
-                                <li class="activity-item">
-                                    <span>Négociation acceptée</span>
-                                    <span class="activity-date">Il y a 3j</span>
-                                </li>
+                                <li class="activity-item" style="color:var(--text-muted);font-size:0.85rem;">Chargement...</li>
                             </ul>
                         </div>
                         <div class="dashboard-card">
@@ -671,6 +660,7 @@
         let currentProduct = null;
         let isLoggedIn = false;
         let currentUser = null;
+        let auctionTimerInterval = null;
 
         // ===== HELPERS UI =====
 
@@ -742,9 +732,9 @@
                 if (response.ok) {
                     isLoggedIn = true;
                     currentUser = data.user;
+                    localStorage.setItem('user', JSON.stringify(data.user));
                     document.getElementById('profile-btn').innerHTML = '<i class="fa-solid fa-user-check" style="color:var(--success-green)"></i>';
                     await updateDashboard();
-                    await fetchNotifications();
                     showView('home');
                     alert('Connexion réussie ! Bienvenue ' + currentUser.username);
                 } else {
@@ -824,6 +814,9 @@
             } catch (e) {
                 console.error('Erreur negos dashboard:', e);
             }
+
+            const notifs = await fetchNotifications();
+            renderActivityList(notifs.slice(0, 5));
         }
 
         function renderDashboardNegotiations(negos) {
@@ -861,6 +854,24 @@
             '</ul>';
         }
 
+        function renderActivityList(notifs) {
+            const list = document.getElementById('activity-list');
+            if (!list) return;
+            if (!notifs || notifs.length === 0) {
+                list.innerHTML = '<li class="activity-item" style="color:var(--text-muted);font-size:0.85rem;">Aucune activité récente.</li>';
+                return;
+            }
+            list.innerHTML = notifs.map(n => {
+                const d = new Date(n.created_at);
+                const timeStr = d.toLocaleDateString('fr-FR', { day:'numeric', month:'short' })
+                    + ' ' + d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+                return `<li class="activity-item">
+                    <span>${escapeHtml(n.message)}</span>
+                    <span class="activity-date">${timeStr}</span>
+                </li>`;
+            }).join('');
+        }
+
         async function openNegoFromDashboard(negoId) {
             showView('negotiation');
             await loadNegotiation(negoId);
@@ -869,6 +880,7 @@
         function simulateLogout() {
             isLoggedIn = false;
             currentUser = null;
+            localStorage.removeItem('user');
             document.getElementById('profile-btn').innerHTML = '<i class="fa-regular fa-user"></i>';
             document.getElementById('notif-badge').classList.remove('visible');
             document.getElementById('notif-list').innerHTML = '<div class="notif-empty">Connectez-vous pour voir vos notifications.</div>';
@@ -1014,7 +1026,25 @@
                         document.getElementById('bid-input').value = '';
                         const bidFeedback = document.getElementById('bid-feedback');
                         if (bidFeedback) bidFeedback.innerText = '';
-                        document.getElementById('btn-place-bid').onclick = () => handlePlaceBid(product.id, currentBid);
+
+                        const isEnded = product.auction && (
+                            product.auction.status === 'ended' ||
+                            new Date(product.auction.end_time) <= new Date()
+                        );
+                        if (isEnded) {
+                            markAuctionEnded();
+                        } else {
+                            const btnBid = document.getElementById('btn-place-bid');
+                            btnBid.disabled = false;
+                            btnBid.textContent = 'Placer une enchère';
+                            btnBid.style.background = '';
+                            btnBid.style.cursor = '';
+                            btnBid.onclick = () => handlePlaceBid(product.id, currentBid);
+                            document.getElementById('bid-input').removeAttribute('disabled');
+                            if (product.auction && product.auction.end_time) {
+                                startAuctionTimer(product.auction.end_time);
+                            }
+                        }
                     } else {
                         const price = parseFloat(product.price);
                         document.getElementById('auction-action-panel').style.display = 'none';
@@ -1428,6 +1458,10 @@
         // ===== NAVIGATION =====
 
         function showView(viewId, category = null) {
+            if (viewId !== 'detail' && auctionTimerInterval) {
+                clearInterval(auctionTimerInterval);
+                auctionTimerInterval = null;
+            }
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId + '-view').classList.add('active');
 
@@ -1454,12 +1488,74 @@
             window.scrollTo(0, 0);
         }
 
-        showView('home');
+        // ===== INITIALISATION (restauration de session) =====
+        (async () => {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                try {
+                    currentUser = JSON.parse(savedUser);
+                    isLoggedIn = true;
+                    document.getElementById('profile-btn').innerHTML =
+                        '<i class="fa-solid fa-user-check" style="color:var(--success-green)"></i>';
+                    await updateDashboard();
+                } catch (e) {
+                    localStorage.removeItem('user');
+                }
+            }
+            showView('home');
+        })();
+
+        // ===== ENCHÈRES - TIMER =====
+
+        function markAuctionEnded() {
+            if (auctionTimerInterval) {
+                clearInterval(auctionTimerInterval);
+                auctionTimerInterval = null;
+            }
+            const timerBox = document.querySelector('.timer-box');
+            if (timerBox) timerBox.textContent = '00:00:00';
+            const btn = document.getElementById('btn-place-bid');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Enchère terminée';
+                btn.style.background = '#adb5bd';
+                btn.style.cursor = 'not-allowed';
+                btn.onclick = null;
+            }
+            const input = document.getElementById('bid-input');
+            if (input) input.setAttribute('disabled', 'true');
+        }
+
+        function startAuctionTimer(endTimeStr) {
+            if (auctionTimerInterval) {
+                clearInterval(auctionTimerInterval);
+                auctionTimerInterval = null;
+            }
+            const timerBox = document.querySelector('.timer-box');
+            if (!timerBox) return;
+
+            function tick() {
+                const diff = new Date(endTimeStr) - new Date();
+                if (diff <= 0) { markAuctionEnded(); return; }
+                const totalSec = Math.floor(diff / 1000);
+                const d = Math.floor(totalSec / 86400);
+                const h = Math.floor((totalSec % 86400) / 3600);
+                const m = Math.floor((totalSec % 3600) / 60);
+                const s = totalSec % 60;
+                const mm = String(m).padStart(2, '0');
+                const ss = String(s).padStart(2, '0');
+                timerBox.textContent = d > 0
+                    ? `${d}j ${String(h).padStart(2,'0')}h ${mm}m ${ss}s`
+                    : `${String(h).padStart(2,'0')}h ${mm}m ${ss}s`;
+            }
+            tick();
+            auctionTimerInterval = setInterval(tick, 1000);
+        }
 
         // ===== NOTIFICATIONS =====
 
         async function fetchNotifications() {
-            if (!isLoggedIn || !currentUser) return;
+            if (!isLoggedIn || !currentUser) return [];
             try {
                 const res = await fetch(`backend/index.php?action=get_notifications&user_id=${currentUser.id}`);
                 const data = await res.json();
@@ -1471,8 +1567,10 @@
                     badge.classList.remove('visible');
                 }
                 renderNotifications(data.notifications || []);
+                return data.notifications || [];
             } catch (e) {
                 console.error('Erreur notifications:', e);
+                return [];
             }
         }
 

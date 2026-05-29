@@ -39,6 +39,37 @@ function addNotification(PDO $pdo, int $user_id, string $message): void {
     $stmt->execute([$user_id, $message]);
 }
 
+function closeAuctionIfEnded(PDO $pdo, array $auction): array {
+    if ($auction['status'] !== 'active') return $auction;
+    if (strtotime($auction['end_time']) > time()) return $auction;
+
+    try {
+        $pdo->beginTransaction();
+
+        $stmt = $pdo->prepare("UPDATE auctions SET status = 'ended' WHERE id = ? AND status = 'active'");
+        $stmt->execute([(int)$auction['id']]);
+
+        if ((int)($auction['highest_bidder_id'] ?? 0) > 0) {
+            $stmt = $pdo->prepare("UPDATE items SET status = 'sold' WHERE id = ? AND status = 'active'");
+            $stmt->execute([(int)$auction['item_id']]);
+
+            addNotification(
+                $pdo,
+                (int)$auction['highest_bidder_id'],
+                "Félicitations ! Vous avez remporté l'enchère pour \"{$auction['item_name']}\" avec une offre de "
+                . number_format((float)$auction['current_bid'], 2, ',', ' ') . " €."
+            );
+        }
+
+        $pdo->commit();
+        $auction['status'] = 'ended';
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+    }
+
+    return $auction;
+}
+
 // Routeur basique
 $action = isset($_GET['action']) ? $_GET['action'] : 'status';
 
@@ -74,11 +105,13 @@ switch ($action) {
             }
             if ($item['sale_type'] === 'auction') {
                 $stmt = $pdo->prepare(
-                    "SELECT id, current_bid, end_time, status FROM auctions WHERE item_id = ?"
+                    "SELECT id, item_id, current_bid, end_time, status, highest_bidder_id FROM auctions WHERE item_id = ?"
                 );
                 $stmt->execute([$id]);
                 $auction_row = $stmt->fetch();
                 if ($auction_row) {
+                    $auction_row['item_name'] = $item['name'];
+                    $auction_row = closeAuctionIfEnded($pdo, $auction_row);
                     $item['auction'] = $auction_row;
                 }
             }
@@ -104,6 +137,7 @@ switch ($action) {
             if (!$auction) {
                 sendResponse(['error' => 'Enchère introuvable.'], 404);
             }
+            $auction = closeAuctionIfEnded($pdo, $auction);
             $stmt = $pdo->prepare(
                 "SELECT b.amount, b.bid_time, u.username
                  FROM bids b JOIN users u ON b.user_id = u.id
@@ -142,7 +176,7 @@ switch ($action) {
             $pdo->beginTransaction();
 
             $stmt = $pdo->prepare(
-                "SELECT id, current_bid, highest_bidder_id, status FROM auctions WHERE item_id = ? FOR UPDATE"
+                "SELECT id, current_bid, highest_bidder_id, status, end_time FROM auctions WHERE item_id = ? FOR UPDATE"
             );
             $stmt->execute([$item_id]);
             $auction = $stmt->fetch();
@@ -154,6 +188,10 @@ switch ($action) {
             if ($auction['status'] !== 'active') {
                 $pdo->rollBack();
                 sendResponse(['error' => "L'enchère est terminée."], 400);
+            }
+            if (strtotime($auction['end_time']) <= time()) {
+                $pdo->rollBack();
+                sendResponse(['error' => "L'enchère est terminée."], 403);
             }
             if ($amount <= (float)$auction['current_bid']) {
                 $pdo->rollBack();

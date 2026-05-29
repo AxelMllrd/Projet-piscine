@@ -131,13 +131,12 @@ try {
     if ($db_sale_type === 'auction') {
         $stmt = $pdo->prepare(
             "INSERT INTO auctions (item_id, starting_price, current_bid, end_time)
-             VALUES (?, ?, ?, ?)"
+             VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 7 DAY))"
         );
         $stmt->execute([
             $item_id,
             $prix,
             $prix,
-            date('Y-m-d H:i:s', strtotime('+7 days'))
         ]);
     }
 
