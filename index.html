@@ -55,6 +55,61 @@
         .icon-btn { background-color: #f8f9fa; border: 1px solid var(--border-color); color: var(--text-muted); width: 40px; height: 40px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
         .icon-btn:hover { background-color: #e9ecef; color: var(--primary-blue); }
 
+        /* --- Auth & Dashboard Specifics --- */
+        .auth-container { max-width: 400px; margin: 50px auto; background: white; padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .auth-form input, .auth-form select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-family: inherit; }
+        .auth-form input:focus { border-color: var(--secondary-blue); outline: none; }
+        .auth-toggle { text-align: center; color: var(--secondary-blue); cursor: pointer; font-size: 0.9rem; margin-top: 15px; font-weight: 500; }
+        .auth-toggle:hover { text-decoration: underline; }
+
+        .dashboard-container { max-width: 900px; margin: 40px auto; background: white; border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .dashboard-header { 
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue)); 
+            color: white; 
+            padding: 40px; 
+            display: flex; 
+            align-items: center; 
+            gap: 30px;
+            position: relative;
+        }
+        .dashboard-header::after {
+            content: '⛵';
+            position: absolute;
+            right: 40px;
+            top: 20px;
+            font-size: 5rem;
+            opacity: 0.1;
+            transform: rotate(-15deg);
+        }
+        .dashboard-avatar { width: 100px; height: 100px; background: rgba(255,255,255,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 3rem; border: 3px solid rgba(255,255,255,0.3); }
+        .dashboard-content { padding: 40px; background: #fafbfc; }
+        
+        .dashboard-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px; margin-top: 30px; }
+        .dashboard-card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            border: 1px solid #edf2f7; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            transition: transform 0.2s;
+        }
+        .dashboard-card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 15px; color: var(--primary-blue); font-weight: 700; }
+        .card-header i { font-size: 1.2rem; }
+
+        .dashboard-stats { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 30px; }
+        .stat-item { flex: 1; background: white; padding: 20px; border-radius: 12px; text-align: center; border: 1px solid #edf2f7; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--primary-blue); display: block; }
+        .stat-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
+        
+        .activity-list { list-style: none; padding: 0; margin: 0; }
+        .activity-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-date { color: #94a3b8; font-size: 0.8rem; }
+
+        .btn-logout { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-logout:hover { background: #fecaca; }
+
         /* --- Breadcrumbs --- */
         .breadcrumbs { padding: 15px 5%; font-size: 0.85rem; color: var(--text-muted); background: white; border-bottom: 1px solid var(--border-color); display: none; }
         .breadcrumbs.active { display: block; }
@@ -66,10 +121,81 @@
         .view.active { display: block; }
 
         /* --- Home View --- */
-        .hero-banner { margin: 30px 5%; background-color: #ced4da; border-radius: 12px; padding: 60px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        .categories-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 5% 60px 5%; background: white; padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); }
-        .category-card { background-color: var(--card-bg); height: 120px; border-radius: 8px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 15px; font-weight: 600; color: #495057; cursor: pointer; transition: all 0.2s; }
-        .category-card:hover { transform: translateY(-5px); background-color: #dee2e6; color: var(--primary-blue); }
+        .hero-banner { 
+            margin: 30px 5%; 
+            background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1500930287596-c1ecf054bb20?auto=format&fit=crop&q=80&w=1200');
+            background-size: cover;
+            background-position: center;
+            border-radius: 12px; 
+            padding: 60px 20px; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 15px;
+            color: white;
+        }
+        .hero-banner h1 { color: white !important; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .hero-banner p { color: #f0f2f5 !important; font-weight: 500; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+
+        .categories-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 20px; 
+            margin: 20px 5% 60px 5%; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-color); 
+        }
+
+        .category-card { 
+            height: 150px; 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            text-align: center; 
+            padding: 15px; 
+            font-weight: 800; 
+            color: white; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            transition: background 0.3s;
+        }
+
+        .category-card:hover::before {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .category-card span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .category-card:hover { transform: translateY(-5px); }
+
+        /* Images spécifiques aux catégories */
+         .cat-voile { background-image: url('https://images.unsplash.com/photo-1629207431449-34752c1e7960?auto=format&fit=crop&q=80&w=400'); }
+         .cat-windsurf { background-image: url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&q=80&w=400'); }
+         .cat-kitesurf { background-image: url('https://stock.adobe.com/fr/search?k=kitesurf'); }
+         .cat-accessoires { background-image: url('https://images.unsplash.com/photo-1520242739010-44e95bde329e?auto=format&fit=crop&q=80&w=400'); }
+         .cat-vetements { background-image: url('https://images.unsplash.com/photo-1606907291416-0472093708d2?auto=format&fit=crop&q=80&w=400'); }
+         .cat-pieces { background-image: url('https://images.unsplash.com/photo-1581092160562-40aa08e78837?auto=format&fit=crop&q=80&w=400'); }
 
         /* --- Catalogue Layout --- */
         .catalogue-layout { display: grid; grid-template-columns: 280px 1fr; gap: 30px; margin: 30px 5%; }
@@ -143,7 +269,7 @@
         <div class="header-right">
             <div class="icon-btn"><i class="fa-regular fa-bell"></i></div>
             <div class="icon-btn" onclick="showView('catalogue')"><i class="fa-solid fa-cart-shopping"></i></div>
-            <div class="icon-btn"><i class="fa-regular fa-user"></i></div>
+            <div class="icon-btn" id="profile-btn" onclick="handleProfileClick()"><i class="fa-regular fa-user"></i></div>
         </div>
     </header>
 
@@ -162,13 +288,13 @@
                 <p style="color:#546e7a; margin:0;">Achetez, vendez, enchérissez</p>
             </section>
             <div class="categories-grid">
-                <div class="category-card" onclick="showView('catalogue', 'Voile traditionnelle')">Voile traditionnelle</div>
-                <div class="category-card" onclick="showView('catalogue', 'Planche à voile')">Planche à voile</div>
-                <div class="category-card" onclick="showView('catalogue', 'Kitesurf')">Kitesurf</div>
-                <div class="category-card" onclick="showView('catalogue', 'Accessoires')">Accessoires</div>
-                <div class="category-card" onclick="showView('catalogue', 'Vêtements')">Vêtements</div>
-                <div class="category-card" onclick="showView('catalogue', 'Pièces détachées')">Pièces détachées</div>
-            </div>
+                        <div class="category-card cat-voile" onclick="showView('catalogue', 'Wingfoil')"><span>Wingfoil</span></div>
+                        <div class="category-card cat-windsurf" onclick="showView('catalogue', 'Planche à voile')"><span>Planche à voile</span></div>
+                        <div class="category-card cat-kitesurf" onclick="showView('catalogue', 'Kitesurf')"><span>Kitesurf</span></div>
+                        <div class="category-card cat-accessoires" onclick="showView('catalogue', 'Accessoires')"><span>Accessoires</span></div>
+                        <div class="category-card cat-vetements" onclick="showView('catalogue', 'Néoprène')"><span>Néoprène</span></div>
+                        <div class="category-card cat-pieces" onclick="showView('catalogue', 'Pièces détachées')"><span>Pièces détachées</span></div>
+                    </div>
         </div>
 
         <!-- Catalogue View -->
@@ -190,6 +316,99 @@
                     </div>
                     <div class="products-grid" id="products-grid"></div>
                 </section>
+            </div>
+        </div>
+
+        <!-- Auth View -->
+        <div id="auth-view" class="view">
+            <div class="auth-container">
+                <h2 id="auth-title" style="text-align:center; color:var(--primary-blue);">Connexion</h2>
+                <div id="login-form" class="auth-form">
+                    <input type="text" id="login-id" placeholder="Pseudo ou Email">
+                    <input type="password" id="login-pass" placeholder="Mot de passe">
+                    <button class="btn-action btn-buy" onclick="handleLogin()">Se connecter</button>
+                    <p class="auth-toggle" onclick="toggleAuth(false)">Pas encore de compte ? S'inscrire</p>
+                </div>
+                <div id="register-form" class="auth-form" style="display:none;">
+                    <input type="text" id="reg-nom" placeholder="Nom">
+                    <input type="text" id="reg-prenom" placeholder="Prénom">
+                    <input type="text" id="reg-user" placeholder="Pseudo">
+                    <input type="email" id="reg-email" placeholder="Email">
+                    <input type="password" id="reg-pass" placeholder="Mot de passe">
+                    <select id="reg-role">
+                        <option value="acheteur">Je suis un Acheteur</option>
+                        <option value="vendeur">Je suis un Vendeur</option>
+                    </select>
+                    <label style="font-size:0.8rem; display:block; margin-bottom:15px;">
+                        <input type="checkbox" id="reg-cgu"> J'accepte les CGU
+                    </label>
+                    <button class="btn-action btn-buy" onclick="handleRegister()">Créer mon compte</button>
+                    <p class="auth-toggle" onclick="toggleAuth(true)">Déjà un compte ? Se connecter</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="view">
+            <div class="dashboard-container">
+                <div class="dashboard-header">
+                    <div class="dashboard-avatar" id="user-avatar">⚓</div>
+                    <div>
+                        <h2 style="margin:0; font-size:1.8rem;">Tableau de bord</h2>
+                        <p style="margin:5px 0 0 0; opacity:0.9; font-weight:500;">Bienvenue à bord, <span id="user-display-name">MarinDu56</span> !</p>
+                    </div>
+                </div>
+                <div class="dashboard-content">
+                    <div class="dashboard-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-buys">3</span>
+                            <span class="stat-label">Achats</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-bids">12</span>
+                            <span class="stat-label">Enchères</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="stat-sales">2</span>
+                            <span class="stat-label">Ventes</span>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <div class="card-header"><i class="fa-solid fa-clock-rotate-left"></i> Activité Récente</div>
+                            <ul class="activity-list" id="activity-list">
+                                <li class="activity-item">
+                                    <span>Enchère placée sur <strong>Voile North</strong></span>
+                                    <span class="activity-date">Il y a 2h</span>
+                                </li>
+                                <li class="activity-item">
+                                    <span>Achat de <strong>Aileron Carbone</strong></span>
+                                    <span class="activity-date">Hier</span>
+                                </li>
+                                <li class="activity-item">
+                                    <span>Négociation acceptée</span>
+                                    <span class="activity-date">Il y a 3j</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="dashboard-card">
+                            <div class="card-header"><i class="fa-solid fa-user-gear"></i> Informations Profil</div>
+                            <div style="font-size:0.9rem; line-height:1.8;">
+                                <div><strong>Pseudo:</strong> <span id="info-username">@MarinDu56</span></div>
+                                <div><strong>Email:</strong> <span id="info-email">marin.v@example.com</span></div>
+                                <div><strong>Rôle:</strong> <span id="info-role" style="text-transform:capitalize;">Acheteur</span></div>
+                                <div><strong>Membre depuis:</strong> Mai 2026</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top:40px; display:flex; justify-content:flex-end;">
+                        <button class="btn-logout" onclick="simulateLogout()">
+                            <i class="fa-solid fa-right-from-bracket"></i> Se déconnecter
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -316,6 +535,134 @@
             { id: 5, name: 'Combinaison Néoprène', price: 180, type: 'buy', icon: 'fa-box-open' },
             { id: 6, name: 'Mât Carbone 400', price: 310, type: 'auction', icon: 'fa-gavel' }
         ];
+
+        let isLoggedIn = false;
+        let currentUser = null;
+
+        function handleProfileClick() {
+            if (!isLoggedIn) {
+                showView('auth');
+            } else {
+                showView('dashboard');
+            }
+        }
+
+        function toggleAuth(showLogin) {
+            document.getElementById('login-form').style.display = showLogin ? 'block' : 'none';
+            document.getElementById('register-form').style.display = showLogin ? 'none' : 'block';
+            document.getElementById('auth-title').innerText = showLogin ? 'Connexion' : 'Inscription';
+        }
+
+        async function handleLogin() {
+            const identifier = document.getElementById('login-id').value;
+            const password = document.getElementById('login-pass').value;
+
+            if (!identifier || !password) {
+                alert("Veuillez remplir tous les champs.");
+                return;
+            }
+
+            try {
+                const response = await fetch('backend/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    isLoggedIn = true;
+                    currentUser = data.user;
+                    // On simule quelques données additionnelles pour le dashboard
+                    currentUser.email = data.user.email || (identifier.includes('@') ? identifier : `${data.user.username}@voile.fr`);
+                    
+                    document.getElementById('profile-btn').innerHTML = '<i class="fa-solid fa-user-check" style="color:var(--success-green)"></i>';
+                    await updateDashboard();
+                    showView('home');
+                    alert("Connexion réussie ! Bienvenue " + currentUser.username);
+                } else {
+                    alert(data.message || "Erreur lors de la connexion.");
+                }
+            } catch (error) {
+                console.error("Erreur login:", error);
+                alert("Erreur de connexion au serveur.");
+            }
+        }
+
+        async function handleRegister() {
+            const nom = document.getElementById('reg-nom').value;
+            const prenom = document.getElementById('reg-prenom').value;
+            const username = document.getElementById('reg-user').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-pass').value;
+            const role = document.getElementById('reg-role').value;
+            const cgu = document.getElementById('reg-cgu').checked;
+
+            if (!nom || !prenom || !username || !email || !password || !role) {
+                alert("Veuillez remplir tous les champs.");
+                return;
+            }
+
+            if (!cgu) {
+                alert("Vous devez accepter les CGU.");
+                return;
+            }
+
+            try {
+                const response = await fetch('backend/register.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nom, prenom, username, email, password, role })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
+                    toggleAuth(true); // Redirige vers le formulaire de connexion
+                } else {
+                    alert(data.message || "Erreur lors de l'inscription.");
+                }
+            } catch (error) {
+                console.error("Erreur register:", error);
+                alert("Erreur de connexion au serveur.");
+            }
+        }
+
+        async function updateDashboard() {
+            if (!currentUser) return;
+            
+            document.getElementById('user-display-name').innerText = currentUser.username;
+            document.getElementById('info-username').innerText = '@' + currentUser.username;
+            document.getElementById('info-email').innerText = currentUser.email;
+            document.getElementById('info-role').innerText = currentUser.role;
+            
+            // Avatar selon le rôle
+            document.getElementById('user-avatar').innerText = currentUser.role === 'vendeur' ? '🚢' : '⚓';
+
+            try {
+                const response = await fetch(`backend/get_user_stats.php?user_id=${currentUser.id}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('stat-buys').innerText = data.stats.buys;
+                    document.getElementById('stat-bids').innerText = data.stats.bids;
+                    document.getElementById('stat-sales').innerText = data.stats.sales;
+                }
+            } catch (error) {
+                console.error("Erreur stats:", error);
+                // On laisse les valeurs par défaut si erreur
+            }
+        }
+
+        function simulateLogout() {
+            isLoggedIn = false;
+            currentUser = null;
+            document.getElementById('profile-btn').innerHTML = '<i class="fa-regular fa-user"></i>';
+            showView('home');
+            alert("Vous avez été déconnecté.");
+        }
 
         function showView(viewId, category = null) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
