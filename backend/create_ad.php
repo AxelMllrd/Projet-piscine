@@ -10,7 +10,7 @@ header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers
 require_once 'config.php';
 
 // Dossier d'upload
-$upload_dir = 'uploads/';
+$upload_dir = __DIR__ . '/uploads/';
 if (!is_dir($upload_dir)) {
     mkdir($upload_dir, 0777, true);
 }
@@ -66,7 +66,7 @@ if (!empty($_FILES['images'])) {
             $destination = $upload_dir . $new_filename;
 
             if (move_uploaded_file($tmp_name, $destination)) {
-                $image_paths[] = $destination;
+                $image_paths[] = 'backend/uploads/' . $new_filename;
             }
         }
     }
@@ -79,34 +79,74 @@ if (empty($image_paths)) {
     exit;
 }
 
+// Mapping vers les valeurs ENUM de la table items
+$category_map = [
+    'wingfoil' => 'wingfoil', 'Wingfoil' => 'wingfoil',
+    'kitesurf' => 'kitesurf', 'Kitesurf' => 'kitesurf',
+    'windsurf' => 'windsurf', 'Planche à voile' => 'windsurf',
+    'surf'     => 'surf',     'Surf'     => 'surf',
+    'windfoil' => 'windfoil', 'Windfoil' => 'windfoil',
+    'kitefoil' => 'kitefoil', 'Kitefoil' => 'kitefoil',
+    'pumpfoil' => 'pumpfoil',
+];
+$condition_map = [
+    'new'    => 'new',  'Neuf'          => 'new',
+    'used'   => 'used', 'Occasion'      => 'used',
+    'Très bon état' => 'used', 'Bon état' => 'used', 'Satisfaisant' => 'used',
+];
+$sale_type_map = [
+    'immediate'   => 'immediate',   'Achat immédiat' => 'immediate',
+    'auction'     => 'auction',     'Enchère'        => 'auction',
+    'negotiation' => 'negotiation', 'Négociation'    => 'negotiation',
+];
+
+$db_category  = $category_map[$categorie]    ?? null;
+$db_condition = $condition_map[$etat]        ?? null;
+$db_sale_type = $sale_type_map[$type_vente]  ?? null;
+
+if (!$db_category || !$db_condition || !$db_sale_type) {
+    http_response_code(400);
+    echo json_encode(["message" => "Catégorie, état ou type de vente invalide."]);
+    exit;
+}
+
 try {
-    $query = "INSERT INTO ANNONCE (Utilisateur_ID, Titre, Description, Categorie, Etat, Type_de_vente, Prix, Images) 
-              VALUES (:uid, :titre, :desc, :cat, :etat, :type, :prix, :imgs)";
-    
-    $stmt = $pdo->prepare($query);
-    
-    $result = $stmt->execute([
-        ':uid' => $user_id,
-        ':titre' => $titre,
-        ':desc' => $description,
-        ':cat' => $categorie,
-        ':etat' => $etat,
-        ':type' => $type_vente,
-        ':prix' => $prix,
-        ':imgs' => json_encode($image_paths)
+    $stmt = $pdo->prepare(
+        "INSERT INTO items (seller_id, name, description, category, item_condition, price, sale_type, image_url)
+         VALUES (:seller_id, :name, :desc, :cat, :cond, :prix, :sale_type, :img)"
+    );
+    $stmt->execute([
+        ':seller_id' => $user_id,
+        ':name'      => $titre,
+        ':desc'      => $description,
+        ':cat'       => $db_category,
+        ':cond'      => $db_condition,
+        ':prix'      => $prix,
+        ':sale_type' => $db_sale_type,
+        ':img'       => $image_paths[0] ?? null,
     ]);
 
-    if ($result) {
-        http_response_code(201);
-        echo json_encode([
-            "success" => true,
-            "message" => "Annonce créée avec succès.",
-            "ad_id" => $pdo->lastInsertId()
+    $item_id = $pdo->lastInsertId();
+
+    if ($db_sale_type === 'auction') {
+        $stmt = $pdo->prepare(
+            "INSERT INTO auctions (item_id, starting_price, current_bid, end_time)
+             VALUES (?, ?, ?, ?)"
+        );
+        $stmt->execute([
+            $item_id,
+            $prix,
+            $prix,
+            date('Y-m-d H:i:s', strtotime('+7 days'))
         ]);
-    } else {
-        http_response_code(503);
-        echo json_encode(["message" => "Erreur lors de l'insertion en base de données."]);
     }
+
+    http_response_code(201);
+    echo json_encode([
+        "success" => true,
+        "message" => "Annonce créée avec succès.",
+        "ad_id"   => $item_id
+    ]);
 
 } catch (PDOException $e) {
     http_response_code(500);

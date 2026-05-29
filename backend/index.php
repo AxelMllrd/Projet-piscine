@@ -33,24 +33,62 @@ switch ($action) {
         }
         break;
 
+    case 'item_detail':
+        $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$id) {
+            sendResponse(['error' => 'ID non spécifié.'], 400);
+        }
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM items WHERE id = ?");
+            $stmt->execute([$id]);
+            $item = $stmt->fetch();
+            if (!$item) {
+                sendResponse(['error' => 'Article introuvable.'], 404);
+            }
+            if ($item['sale_type'] === 'auction') {
+                $stmt = $pdo->prepare(
+                    "SELECT id, current_bid, end_time, status FROM auctions WHERE item_id = ?"
+                );
+                $stmt->execute([$id]);
+                $auction_row = $stmt->fetch();
+                if ($auction_row) {
+                    $item['auction'] = $auction_row;
+                }
+            }
+            sendResponse($item);
+        } catch (PDOException $e) {
+            sendResponse(['error' => 'Erreur BDD.'], 500);
+        }
+        break;
+
     case 'auction_details':
-        $auction_id = $_GET['id'] ?? 0;
-        // Mock auction details for demonstration
-        $auction = [
-            'id' => 1,
-            'item_id' => 3, // Kitesurf North Reach 9m
-            'item_name' => 'Kitesurf North Reach 9m',
-            'starting_price' => 500.00,
-            'current_bid' => 620.00,
-            'end_time' => date('Y-m-d H:i:s', strtotime('+2 days')),
-            'status' => 'active',
-            'history' => [
-                ['user' => 'Jean L.', 'amount' => 620.00, 'time' => '2026-05-28 14:30:00'],
-                ['user' => 'Marie S.', 'amount' => 600.00, 'time' => '2026-05-28 12:15:00'],
-                ['user' => 'Pierre D.', 'amount' => 550.00, 'time' => '2026-05-28 10:00:00']
-            ]
-        ];
-        sendResponse($auction);
+        $auction_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+        if (!$auction_id) {
+            sendResponse(['error' => 'ID non spécifié.'], 400);
+        }
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT a.*, i.name AS item_name
+                 FROM auctions a JOIN items i ON a.item_id = i.id
+                 WHERE a.id = ?"
+            );
+            $stmt->execute([$auction_id]);
+            $auction = $stmt->fetch();
+            if (!$auction) {
+                sendResponse(['error' => 'Enchère introuvable.'], 404);
+            }
+            $stmt = $pdo->prepare(
+                "SELECT b.amount, b.bid_time, u.username
+                 FROM bids b JOIN users u ON b.user_id = u.id
+                 WHERE b.auction_id = ?
+                 ORDER BY b.bid_time DESC LIMIT 10"
+            );
+            $stmt->execute([$auction['id']]);
+            $auction['history'] = $stmt->fetchAll();
+            sendResponse($auction);
+        } catch (PDOException $e) {
+            sendResponse(['error' => 'Erreur BDD.'], 500);
+        }
         break;
 
     case 'place_bid':
@@ -146,6 +184,54 @@ switch ($action) {
             ]);
         } catch (PDOException $e) {
             sendResponse(['error' => "Erreur serveur lors de l'achat."], 500);
+        }
+        break;
+
+    case 'start_negotiation':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        $input    = json_decode(file_get_contents('php://input'), true);
+        $item_id  = isset($input['item_id'])  ? (int)$input['item_id']  : 0;
+        $buyer_id = isset($input['buyer_id']) ? (int)$input['buyer_id'] : 0;
+        $offer    = isset($input['offer'])    ? (float)$input['offer']  : 0;
+
+        if (!$item_id || !$buyer_id || $offer <= 0) {
+            sendResponse(['error' => 'Données incomplètes.'], 400);
+        }
+        try {
+            $stmt = $pdo->prepare("SELECT id, sale_type, status FROM items WHERE id = ?");
+            $stmt->execute([$item_id]);
+            $item = $stmt->fetch();
+
+            if (!$item || $item['status'] !== 'active') {
+                sendResponse(['error' => 'Article indisponible.'], 400);
+            }
+            if ($item['sale_type'] !== 'negotiation') {
+                sendResponse(['error' => "Cet article ne propose pas la négociation."], 400);
+            }
+
+            $stmt = $pdo->prepare(
+                "SELECT id FROM negotiations
+                 WHERE item_id = ? AND buyer_id = ? AND status = 'pending' LIMIT 1"
+            );
+            $stmt->execute([$item_id, $buyer_id]);
+            if ($stmt->fetch()) {
+                sendResponse(['error' => 'Une négociation est déjà en cours pour cet article.'], 400);
+            }
+
+            $stmt = $pdo->prepare(
+                "INSERT INTO negotiations (item_id, buyer_id, status, last_offer) VALUES (?, ?, 'pending', ?)"
+            );
+            $stmt->execute([$item_id, $buyer_id, $offer]);
+
+            sendResponse([
+                'success'        => true,
+                'message'        => "Votre offre de " . number_format($offer, 2, ',', ' ') . " € a été envoyée au vendeur.",
+                'negotiation_id' => $pdo->lastInsertId()
+            ]);
+        } catch (PDOException $e) {
+            sendResponse(['error' => 'Erreur serveur.'], 500);
         }
         break;
 
