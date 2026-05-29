@@ -21,60 +21,16 @@ switch ($action) {
         break;
     
     case 'items':
-        // Simulation de données pour le matériel de voile
-        $mock_items = [
-            [
-                'id' => 1,
-                'name' => 'Wing Foil Fanatic Sky Wing',
-                'description' => 'Planche de wing foil 5\'4" en excellent état, idéale pour débuter et progresser.',
-                'category' => 'wingfoil',
-                'item_condition' => 'used',
-                'price' => 750.00,
-                'sale_type' => 'immediate',
-                'image_url' => 'https://images.unsplash.com/photo-1629207431449-34752c1e7960?auto=format&fit=crop&q=80&w=800'
-            ],
-            [
-                'id' => 2,
-                'name' => 'Windsurf Goya Nexus 2024',
-                'description' => 'Voile de windsurf freeride performante, stable et légère. Neuve sous blister.',
-                'category' => 'windsurf',
-                'item_condition' => 'new',
-                'price' => 890.00,
-                'sale_type' => 'immediate',
-                'image_url' => 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&q=80&w=800'
-            ],
-            [
-                'id' => 3,
-                'name' => 'Kitesurf North Reach 9m',
-                'description' => 'Aile de kite polyvalente pour tout faire. Un accro réparé par un pro.',
-                'category' => 'kitesurf',
-                'item_condition' => 'used',
-                'price' => 620.00,
-                'sale_type' => 'auction',
-                'image_url' => 'https://images.unsplash.com/photo-1502933691298-84fa1463ec83?auto=format&fit=crop&q=80&w=800'
-            ],
-            [
-                'id' => 4,
-                'name' => 'Surf Pyzel Ghost 6\'0"',
-                'description' => 'La planche mythique de John John Florence. Superbe shape pour vagues creuses.',
-                'category' => 'surf',
-                'item_condition' => 'new',
-                'price' => 780.00,
-                'sale_type' => 'negotiation',
-                'image_url' => 'https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&q=80&w=800'
-            ],
-            [
-                'id' => 5,
-                'name' => 'Windfoil NeilPryde Glide Surf',
-                'description' => 'Foil complet en carbone. Très peu servi.',
-                'category' => 'windfoil',
-                'item_condition' => 'used',
-                'price' => 950.00,
-                'sale_type' => 'immediate',
-                'image_url' => 'https://images.unsplash.com/photo-1544552866-d3ed42536cfd?auto=format&fit=crop&q=80&w=800'
-            ]
-        ];
-        sendResponse($mock_items);
+      try {
+            // On va chercher toutes les annonces actives dans la base de données MariaDB
+            $stmt = $pdo->query("SELECT * FROM items WHERE status = 'active' ORDER BY created_at DESC");
+            $items = $stmt->fetchAll();
+            
+            // On renvoie les vraies données au frontend
+            sendResponse($items);
+        } catch (PDOException $e) {
+            sendResponse(['error' => 'Erreur BDD : ' . $e->getMessage()], 500);
+        }
         break;
 
     case 'auction_details':
@@ -101,22 +57,61 @@ switch ($action) {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             sendResponse(['error' => 'Méthode non autorisée'], 405);
         }
-        $input = json_decode(file_get_contents('php://input'), true);
-        $auction_id  = isset($input['auction_id'])  ? (int)$input['auction_id']    : 0;
-        $amount      = isset($input['amount'])       ? (float)$input['amount']      : 0;
-        $current_bid = isset($input['current_bid'])  ? (float)$input['current_bid'] : 0;
+        $input   = json_decode(file_get_contents('php://input'), true);
+        $item_id = isset($input['item_id'])  ? (int)$input['item_id']   : 0;
+        $user_id = isset($input['user_id'])  ? (int)$input['user_id']   : 0;
+        $amount  = isset($input['amount'])   ? (float)$input['amount']  : 0;
 
-        if (!$auction_id || !$amount) {
+        if (!$item_id || !$user_id || $amount <= 0) {
             sendResponse(['error' => 'Données incomplètes.'], 400);
         }
-        if ($amount <= $current_bid) {
-            sendResponse(['error' => "L'offre doit être supérieure à l'enchère actuelle de " . number_format($current_bid, 2, ',', ' ') . " €."], 400);
+
+        try {
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare(
+                "SELECT id, current_bid, status FROM auctions WHERE item_id = ? FOR UPDATE"
+            );
+            $stmt->execute([$item_id]);
+            $auction = $stmt->fetch();
+
+            if (!$auction) {
+                $pdo->rollBack();
+                sendResponse(['error' => 'Enchère introuvable pour cet article.'], 404);
+            }
+            if ($auction['status'] !== 'active') {
+                $pdo->rollBack();
+                sendResponse(['error' => "L'enchère est terminée."], 400);
+            }
+            if ($amount <= (float)$auction['current_bid']) {
+                $pdo->rollBack();
+                sendResponse([
+                    'error' => "L'offre doit être strictement supérieure à l'enchère actuelle de "
+                               . number_format($auction['current_bid'], 2, ',', ' ') . " €."
+                ], 400);
+            }
+
+            $stmt = $pdo->prepare(
+                "UPDATE auctions SET current_bid = ?, highest_bidder_id = ? WHERE id = ?"
+            );
+            $stmt->execute([$amount, $user_id, $auction['id']]);
+
+            $stmt = $pdo->prepare(
+                "INSERT INTO bids (auction_id, user_id, amount) VALUES (?, ?, ?)"
+            );
+            $stmt->execute([$auction['id'], $user_id, $amount]);
+
+            $pdo->commit();
+
+            sendResponse([
+                'success' => true,
+                'message' => "Enchère de " . number_format($amount, 2, ',', ' ') . " € placée avec succès !",
+                'new_bid' => $amount
+            ]);
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            sendResponse(['error' => "Erreur serveur lors de l'enchère."], 500);
         }
-        sendResponse([
-            'success'  => true,
-            'message'  => "Enchère de " . number_format($amount, 2, ',', ' ') . " € placée avec succès !",
-            'new_bid'  => $amount
-        ]);
         break;
 
     case 'place_buy':
@@ -129,10 +124,29 @@ switch ($action) {
         if (!$item_id) {
             sendResponse(['error' => 'Article non spécifié.'], 400);
         }
-        sendResponse([
-            'success' => true,
-            'message' => 'Achat confirmé ! Le vendeur vous contactera prochainement.'
-        ]);
+
+        try {
+            $stmt = $pdo->prepare("SELECT id, status FROM items WHERE id = ?");
+            $stmt->execute([$item_id]);
+            $item = $stmt->fetch();
+
+            if (!$item) {
+                sendResponse(['error' => 'Article introuvable.'], 404);
+            }
+            if ($item['status'] === 'sold') {
+                sendResponse(['error' => 'Cet article a déjà été vendu.'], 400);
+            }
+
+            $stmt = $pdo->prepare("UPDATE items SET status = 'sold' WHERE id = ?");
+            $stmt->execute([$item_id]);
+
+            sendResponse([
+                'success' => true,
+                'message' => 'Achat confirmé ! Le vendeur vous contactera prochainement.'
+            ]);
+        } catch (PDOException $e) {
+            sendResponse(['error' => "Erreur serveur lors de l'achat."], 500);
+        }
         break;
 
     default:

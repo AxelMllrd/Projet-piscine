@@ -918,7 +918,7 @@
                 const response = await fetch('backend/index.php?action=place_bid', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ auction_id: itemId, amount, current_bid: currentBid })
+                    body: JSON.stringify({ item_id: itemId, user_id: currentUser.id, amount, current_bid: currentBid })
                 });
 
                 const data = await response.json();
