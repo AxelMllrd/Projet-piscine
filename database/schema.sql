@@ -45,18 +45,29 @@ CREATE TABLE IF NOT EXISTS auctions (
     FOREIGN KEY (highest_bidder_id) REFERENCES users(id)
 );
 
--- Table de l'historique des offres (Bids)
+-- Table de l'historique des offres (Bids) - Mise à jour pour ANNONCE
 CREATE TABLE IF NOT EXISTS bids (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    auction_id INT NOT NULL,
+    ad_id INT NOT NULL,
     user_id INT NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     bid_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+    FOREIGN KEY (ad_id) REFERENCES ANNONCE(ID) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Table des ANNONCES (Version demandée par l'utilisateur)
+-- Table des achats effectués
+CREATE TABLE IF NOT EXISTS purchases (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad_id INT NOT NULL,
+    buyer_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    purchase_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ad_id) REFERENCES ANNONCE(ID) ON DELETE CASCADE,
+    FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Table des ANNONCES (Version mise à jour)
 CREATE TABLE IF NOT EXISTS ANNONCE (
     ID INT AUTO_INCREMENT PRIMARY KEY,
     Utilisateur_ID INT NOT NULL,
@@ -64,8 +75,10 @@ CREATE TABLE IF NOT EXISTS ANNONCE (
     Description TEXT NOT NULL,
     Categorie ENUM('Wingfoil', 'Kitesurf', 'Accessoire', 'Néoprène', 'Planche à voile', 'Pièce détachée') NOT NULL,
     Etat ENUM('Neuf', 'Très bon état', 'Bon état', 'Satisfaisant') NOT NULL,
-    Type_de_vente ENUM('Achat immédiat', 'Enchère', 'Négociation') NOT NULL,
+    Type_de_vente ENUM('Achat immédiat', 'Enchère') NOT NULL,
+    Accepte_Nego BOOLEAN DEFAULT FALSE,
     Prix DECIMAL(10, 2) NOT NULL,
+    Date_Fin_Enchere DATETIME NULL,
     Images JSON, -- Pour stocker un tableau de chemins de fichiers
     Date_publication TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (Utilisateur_ID) REFERENCES users(id) ON DELETE CASCADE

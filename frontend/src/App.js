@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Home from './pages/Home';
-import AuctionPage from './pages/AuctionPage';
+import ProductDetail from './components/ProductDetail';
+import Dashboard from './components/Dashboard';
+import CreateAd from './components/CreateAd';
 import Header from './components/Header';
+import { useAuth } from './context/AuthContext';
 
 function App() {
+  const { user } = useAuth();
   const [status, setStatus] = useState('Chargement...');
   const [currentPage, setCurrentPage] = useState('home');
-  const [selectedAuctionId, setSelectedAuctionId] = useState(null);
+  const [selectedAdId, setSelectedAdId] = useState(null);
 
   useEffect(() => {
     fetch('/backend/index.php?action=status')
@@ -15,9 +19,9 @@ function App() {
       .catch(() => setStatus('Connexion backend en attente...'));
   }, []);
 
-  const navigateToAuction = (id) => {
-    setSelectedAuctionId(id);
-    setCurrentPage('auction');
+  const navigateToAd = (id) => {
+    setSelectedAdId(id);
+    setCurrentPage('detail');
     window.scrollTo(0, 0);
   };
 
@@ -26,16 +30,37 @@ function App() {
     window.scrollTo(0, 0);
   };
 
+  const navigateToDashboard = () => {
+    setCurrentPage('dashboard');
+    window.scrollTo(0, 0);
+  };
+
+  const navigateToCreateAd = () => {
+    setCurrentPage('create');
+    window.scrollTo(0, 0);
+  };
+
+  const renderContent = () => {
+    switch (currentPage) {
+      case 'home': return <Home onNavigateToAuction={navigateToAd} />;
+      case 'detail': return <ProductDetail adId={selectedAdId} onBack={navigateToHome} />;
+      case 'dashboard': return <Dashboard />;
+      case 'create': return <CreateAd userId={user?.id} onAdCreated={navigateToDashboard} />;
+      default: return <Home onNavigateToAuction={navigateToAd} />;
+    }
+  };
+
   return (
     <div className="app-container">
-      <Header status={status} onNavigateHome={navigateToHome} />
+      <Header 
+        status={status} 
+        onNavigateHome={navigateToHome} 
+        onNavigateDashboard={navigateToDashboard}
+        onNavigateCreate={navigateToCreateAd}
+      />
       
       <main className="main-content">
-        {currentPage === 'home' ? (
-          <Home onNavigateToAuction={navigateToAuction} />
-        ) : (
-          <AuctionPage auctionId={selectedAuctionId} onBack={navigateToHome} />
-        )}
+        {renderContent()}
       </main>
 
       <footer className="app-footer">

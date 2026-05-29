@@ -10,7 +10,8 @@ const CreateAd = ({ userId, onAdCreated }) => {
         categorie: 'Wingfoil',
         etat: 'Neuf',
         type_vente: 'Achat immédiat',
-        prix: ''
+        prix: '',
+        accepte_nego: false
     });
     const [images, setImages] = useState([]);
     const [previews, setPreviews] = useState([]);
@@ -38,10 +39,13 @@ const CreateAd = ({ userId, onAdCreated }) => {
             alert("Le titre doit faire au moins 5 caractères.");
             return;
         }
-        if (parseFloat(formData.prix) <= 0) {
-            alert("Le prix doit être supérieur à 0.");
+        
+        // Nouvelle validation du prix selon le type de vente
+        if (formData.type_vente === 'Achat immédiat' && (parseFloat(formData.prix) <= 0 || isNaN(formData.prix))) {
+            alert("Veuillez saisir un prix de vente valide.");
             return;
         }
+
         if (images.length === 0) {
             alert("Veuillez ajouter au moins une photo.");
             return;
@@ -56,7 +60,8 @@ const CreateAd = ({ userId, onAdCreated }) => {
         data.append('categorie', formData.categorie);
         data.append('etat', formData.etat);
         data.append('type_vente', formData.type_vente);
-        data.append('prix', formData.prix);
+        data.append('prix', formData.type_vente === 'Enchère' ? 1 : formData.prix);
+        data.append('accepte_nego', formData.type_vente === 'Enchère' ? 0 : (formData.accepte_nego ? 1 : 0));
 
         // Ajout multiple des fichiers
         images.forEach((image) => {
@@ -175,7 +180,7 @@ const CreateAd = ({ userId, onAdCreated }) => {
                     <div style={styles.inputGroup}>
                         <label style={styles.label}>Mode de vente</label>
                         <div style={styles.radioGroup}>
-                            {['Achat immédiat', 'Enchère', 'Négociation'].map(type => (
+                            {['Achat immédiat', 'Enchère'].map(type => (
                                 <label key={type} style={styles.radioLabel}>
                                     <input 
                                         type="radio" 
@@ -190,21 +195,41 @@ const CreateAd = ({ userId, onAdCreated }) => {
                         </div>
                     </div>
 
-                    <div style={styles.inputGroup}>
-                        <label style={styles.label}>Prix de vente</label>
-                        <div style={styles.priceInputWrapper}>
-                            <input 
-                                type="number" 
-                                name="prix" 
-                                value={formData.prix} 
-                                onChange={handleInputChange} 
-                                style={styles.priceInput}
-                                placeholder="0.00"
-                                required 
-                            />
-                            <span style={styles.currency}>€</span>
+                    {formData.type_vente === 'Achat immédiat' ? (
+                        <>
+                            <div style={styles.inputGroup}>
+                                <label style={styles.label}>Prix de vente</label>
+                                <div style={styles.priceInputWrapper}>
+                                    <input 
+                                        type="number" 
+                                        name="prix" 
+                                        value={formData.prix} 
+                                        onChange={handleInputChange} 
+                                        style={styles.priceInput}
+                                        placeholder="0.00"
+                                        required 
+                                    />
+                                    <span style={styles.currency}>€</span>
+                                </div>
+                            </div>
+                            <div style={styles.inputGroup}>
+                                <label style={{...styles.radioLabel, fontWeight: 'normal', color: '#666'}}>
+                                    <input 
+                                        type="checkbox" 
+                                        name="accepte_nego" 
+                                        checked={formData.accepte_nego}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, accepte_nego: e.target.checked }))}
+                                    />
+                                    <span style={{marginLeft: '10px'}}>J'accepte les offres de négociation</span>
+                                </label>
+                            </div>
+                        </>
+                    ) : (
+                        <div style={styles.infoBox}>
+                            <i className="fa-solid fa-circle-info" style={{color: '#0074b7', marginRight: '10px'}}></i>
+                            <span>Le prix de départ est fixé automatiquement à <strong>1 €</strong> et l'enchère durera <strong>7 jours</strong>.</span>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 <button type="submit" style={styles.submitBtn} disabled={loading}>
@@ -235,6 +260,7 @@ const styles = {
     select: { width: '100%', padding: '12px', border: '1px solid #ddd', borderRadius: '6px', background: 'white' },
     radioGroup: { display: 'flex', gap: '20px', marginTop: '10px' },
     radioLabel: { display: 'flex', alignItems: 'center', cursor: 'pointer' },
+    infoBox: { background: '#eef6fc', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #0074b7', fontSize: '0.95rem', color: '#333' },
     priceInputWrapper: { position: 'relative', maxWidth: '200px' },
     priceInput: { width: '100%', padding: '12px 40px 12px 12px', border: '1px solid #ddd', borderRadius: '6px', fontSize: '1.2rem', fontWeight: 'bold' },
     currency: { position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', fontWeight: 'bold', color: '#333' },

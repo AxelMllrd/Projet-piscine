@@ -29,13 +29,22 @@ $description = $_POST['description'] ?? null;
 $categorie = $_POST['categorie'] ?? null;
 $etat = $_POST['etat'] ?? null;
 $type_vente = $_POST['type_vente'] ?? null;
-$prix = $_POST['prix'] ?? null;
+$prix_saisi = $_POST['prix'] ?? null;
+$accepte_nego = $_POST['accepte_nego'] ?? 0;
 
-// Validation simple
-if (!$user_id || !$titre || !$description || !$categorie || !$etat || !$type_vente || !$prix) {
-    http_response_code(400);
-    echo json_encode(["message" => "Données incomplètes."]);
-    exit;
+// Logique métier pour la table ANNONCE
+$db_date_fin_enchere = null;
+$db_prix = (float)$prix_saisi;
+$db_accepte_nego = (int)$accepte_nego;
+
+if ($type_vente === 'Enchère') {
+    $db_prix = 1.00;
+    $db_accepte_nego = 0;
+    // NOW() + 7 days
+    $db_date_fin_enchere = date('Y-m-d H:i:s', strtotime('+7 days'));
+} else {
+    $db_date_fin_enchere = null;
+    // Le prix et accepte_nego restent ceux du formulaire
 }
 
 // Gestion des images
@@ -79,73 +88,68 @@ if (empty($image_paths)) {
     exit;
 }
 
-// Mapping vers les valeurs ENUM de la table items
-$category_map = [
-    'wingfoil' => 'wingfoil', 'Wingfoil' => 'wingfoil',
-    'kitesurf' => 'kitesurf', 'Kitesurf' => 'kitesurf',
-    'windsurf' => 'windsurf', 'Planche à voile' => 'windsurf',
-    'surf'     => 'surf',     'Surf'     => 'surf',
-    'windfoil' => 'windfoil', 'Windfoil' => 'windfoil',
-    'kitefoil' => 'kitefoil', 'Kitefoil' => 'kitefoil',
-    'pumpfoil' => 'pumpfoil',
-];
-$condition_map = [
-    'new'    => 'new',  'Neuf'          => 'new',
-    'used'   => 'used', 'Occasion'      => 'used',
-    'Très bon état' => 'used', 'Bon état' => 'used', 'Satisfaisant' => 'used',
-];
-$sale_type_map = [
-    'immediate'   => 'immediate',   'Achat immédiat' => 'immediate',
-    'auction'     => 'auction',     'Enchère'        => 'auction',
-    'negotiation' => 'negotiation', 'Négociation'    => 'negotiation',
-];
-
-$db_category  = $category_map[$categorie]    ?? null;
-$db_condition = $condition_map[$etat]        ?? null;
-$db_sale_type = $sale_type_map[$type_vente]  ?? null;
-
-if (!$db_category || !$db_condition || !$db_sale_type) {
-    http_response_code(400);
-    echo json_encode(["message" => "Catégorie, état ou type de vente invalide."]);
-    exit;
-}
-
 try {
+    // Insertion dans la table ANNONCE
     $stmt = $pdo->prepare(
+        "INSERT INTO ANNONCE (Utilisateur_ID, Titre, Description, Categorie, Etat, Type_de_vente, Accepte_Nego, Prix, Date_Fin_Enchere, Images)
+         VALUES (:user_id, :titre, :description, :categorie, :etat, :type_vente, :accepte_nego, :prix, :date_fin, :images)"
+    );
+    
+    $stmt->execute([
+        ':user_id'      => $user_id,
+        ':titre'        => $titre,
+        ':description'  => $description,
+        ':categorie'    => $categorie,
+        ':etat'         => $etat,
+        ':type_vente'   => $type_vente,
+        ':accepte_nego' => $db_accepte_nego,
+        ':prix'         => $db_prix,
+        ':date_fin'     => $db_date_fin_enchere,
+        ':images'       => json_encode($image_paths)
+    ]);
+
+    $ad_id = $pdo->lastInsertId();
+
+    // Rétrocompatibilité avec la table items (si nécessaire pour le reste du site)
+    $category_map = [
+        'Wingfoil' => 'wingfoil', 'Kitesurf' => 'kitesurf', 
+        'Accessoire' => 'surf', 'Néoprène' => 'surf', 
+        'Planche à voile' => 'windsurf', 'Pièce détachée' => 'surf'
+    ];
+    $db_cat_legacy = $category_map[$categorie] ?? 'surf';
+    $db_cond_legacy = ($etat === 'Neuf') ? 'new' : 'used';
+    $db_sale_type_legacy = ($type_vente === 'Enchère') ? 'auction' : 'immediate';
+
+    $stmt_legacy = $pdo->prepare(
         "INSERT INTO items (seller_id, name, description, category, item_condition, price, sale_type, image_url)
          VALUES (:seller_id, :name, :desc, :cat, :cond, :prix, :sale_type, :img)"
     );
-    $stmt->execute([
+    $stmt_legacy->execute([
         ':seller_id' => $user_id,
         ':name'      => $titre,
         ':desc'      => $description,
-        ':cat'       => $db_category,
-        ':cond'      => $db_condition,
-        ':prix'      => $prix,
-        ':sale_type' => $db_sale_type,
+        ':cat'       => $db_cat_legacy,
+        ':cond'      => $db_cond_legacy,
+        ':prix'      => $db_prix,
+        ':sale_type' => $db_sale_type_legacy,
         ':img'       => $image_paths[0] ?? null,
     ]);
-
+    
     $item_id = $pdo->lastInsertId();
 
-    if ($db_sale_type === 'auction') {
-        $stmt = $pdo->prepare(
+    if ($type_vente === 'Enchère') {
+        $stmt_auction = $pdo->prepare(
             "INSERT INTO auctions (item_id, starting_price, current_bid, end_time)
              VALUES (?, ?, ?, ?)"
         );
-        $stmt->execute([
-            $item_id,
-            $prix,
-            $prix,
-            date('Y-m-d H:i:s', strtotime('+7 days'))
-        ]);
+        $stmt_auction->execute([$item_id, 1.00, 1.00, $db_date_fin_enchere]);
     }
 
     http_response_code(201);
     echo json_encode([
         "success" => true,
         "message" => "Annonce créée avec succès.",
-        "ad_id"   => $item_id
+        "ad_id"   => $ad_id
     ]);
 
 } catch (PDOException $e) {

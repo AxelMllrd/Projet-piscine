@@ -35,14 +35,14 @@ const NotificationCenter = ({ isOpen, onClose }) => {
         if (!user) return;
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost/backend/get_notifications.php?user_id=${user.id}`, {
+            const response = await fetch(`/backend/get_notifications.php?user_id=${user.id}`, {
                 headers: {
                     'Authorization': `Bearer ${user.id}`
                 }
             });
             if (response.ok) {
                 const data = await response.json();
-                setNotifications(data);
+                setNotifications(Array.isArray(data) ? data : []);
             }
         } catch (error) {
             console.error("Erreur lors de la récupération des notifications", error);
@@ -59,7 +59,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
 
     const markAsRead = async (id) => {
         try {
-            const response = await fetch('http://localhost/backend/mark_as_read.php', {
+            const response = await fetch('/backend/mark_as_read.php', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ const NotificationCenter = ({ isOpen, onClose }) => {
     const deleteNotification = async (e, id) => {
         e.stopPropagation(); // Éviter de déclencher markAsRead
         try {
-            const response = await fetch('http://localhost/backend/delete_notification.php', {
+            const response = await fetch('/backend/delete_notification.php', {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -142,8 +142,9 @@ const NotificationCenter = ({ isOpen, onClose }) => {
 const styles = {
     dropdown: {
         position: 'absolute',
-        top: '60px',
-        right: '20px',
+        top: '100%',
+        right: '0',
+        marginTop: '10px',
         width: '320px',
         maxHeight: '450px',
         backgroundColor: 'white',

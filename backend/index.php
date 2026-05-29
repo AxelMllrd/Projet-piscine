@@ -11,33 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once 'config.php';
+require_once 'notifications_functions.php';
 
-// Crée la table d'historique de négociation si elle n'existe pas encore
-$pdo->exec("CREATE TABLE IF NOT EXISTS negotiation_messages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    negotiation_id INT NOT NULL,
-    sender_id INT NOT NULL,
-    type ENUM('offer','counter','accept','reject') NOT NULL,
-    amount DECIMAL(10,2),
-    message TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (negotiation_id) REFERENCES negotiations(id) ON DELETE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-$pdo->exec("CREATE TABLE IF NOT EXISTS notifications (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    message TEXT NOT NULL,
-    is_read TINYINT(1) NOT NULL DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-function addNotification(PDO $pdo, int $user_id, string $message): void {
-    $stmt = $pdo->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
-    $stmt->execute([$user_id, $message]);
-}
+// Suppression de l'ancienne table notifications car on utilise la nouvelle NOTIFICATION
+// $pdo->exec("CREATE TABLE IF NOT EXISTS notifications (...)"); 
 
 // Routeur basique
 $action = isset($_GET['action']) ? $_GET['action'] : 'status';
@@ -49,12 +26,36 @@ switch ($action) {
     
     case 'items':
       try {
-            // On va chercher toutes les annonces actives dans la base de données MariaDB
-            $stmt = $pdo->query("SELECT * FROM items WHERE status = 'active' ORDER BY created_at DESC");
-            $items = $stmt->fetchAll();
+            $category = isset($_GET['category']) ? $_GET['category'] : null;
+            $search = isset($_GET['search']) ? $_GET['search'] : null;
             
-            // On renvoie les vraies données au frontend
-            sendResponse($items);
+            $query = "SELECT * FROM ANNONCE WHERE 1=1";
+            $params = [];
+            
+            if ($category && $category !== 'Toutes') {
+                $query .= " AND Categorie = ?";
+                $params[] = $category;
+            }
+            
+            if ($search) {
+                $query .= " AND (Titre LIKE ? OR Description LIKE ?)";
+                $params[] = "%$search%";
+                $params[] = "%$search%";
+            }
+            
+            $query .= " ORDER BY Date_publication DESC";
+            
+            $stmt = $pdo->prepare($query);
+            $stmt->execute($params);
+            $annonces = $stmt->fetchAll();
+            
+            foreach ($annonces as &$ad) {
+                if (isset($ad['Images']) && is_string($ad['Images'])) {
+                    $ad['Images'] = json_decode($ad['Images'], true);
+                }
+            }
+            
+            sendResponse($annonces);
         } catch (PDOException $e) {
             sendResponse(['error' => 'Erreur BDD : ' . $e->getMessage()], 500);
         }
@@ -66,55 +67,58 @@ switch ($action) {
             sendResponse(['error' => 'ID non spécifié.'], 400);
         }
         try {
-            $stmt = $pdo->prepare("SELECT * FROM items WHERE id = ?");
+            $stmt = $pdo->prepare("SELECT * FROM ANNONCE WHERE ID = ?");
             $stmt->execute([$id]);
             $item = $stmt->fetch();
             if (!$item) {
-                sendResponse(['error' => 'Article introuvable.'], 404);
+                sendResponse(['error' => 'Annonce introuvable.'], 404);
             }
-            if ($item['sale_type'] === 'auction') {
-                $stmt = $pdo->prepare(
-                    "SELECT id, current_bid, end_time, status FROM auctions WHERE item_id = ?"
-                );
-                $stmt->execute([$id]);
-                $auction_row = $stmt->fetch();
-                if ($auction_row) {
-                    $item['auction'] = $auction_row;
-                }
+            
+            if (isset($item['Images']) && is_string($item['Images'])) {
+                $item['Images'] = json_decode($item['Images'], true);
             }
+            
             sendResponse($item);
         } catch (PDOException $e) {
             sendResponse(['error' => 'Erreur BDD.'], 500);
         }
         break;
 
-    case 'auction_details':
-        $auction_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-        if (!$auction_id) {
-            sendResponse(['error' => 'ID non spécifié.'], 400);
+    case 'user_sales':
+        $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+        if (!$user_id) sendResponse(['error' => 'ID manquant'], 400);
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM ANNONCE WHERE Utilisateur_ID = ? ORDER BY Date_publication DESC");
+            $stmt->execute([$user_id]);
+            $ads = $stmt->fetchAll();
+            foreach ($ads as &$ad) {
+                if (isset($ad['Images'])) $ad['Images'] = json_decode($ad['Images'], true);
+            }
+            sendResponse($ads);
+        } catch (PDOException $e) {
+            sendResponse(['error' => $e->getMessage()], 500);
         }
+        break;
+
+    case 'user_purchases':
+        $user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+        if (!$user_id) sendResponse(['error' => 'ID manquant'], 400);
         try {
             $stmt = $pdo->prepare(
-                "SELECT a.*, i.name AS item_name
-                 FROM auctions a JOIN items i ON a.item_id = i.id
-                 WHERE a.id = ?"
+                "SELECT p.*, a.Titre, a.Images 
+                 FROM purchases p 
+                 JOIN ANNONCE a ON p.ad_id = a.ID 
+                 WHERE p.buyer_id = ? 
+                 ORDER BY p.purchase_time DESC"
             );
-            $stmt->execute([$auction_id]);
-            $auction = $stmt->fetch();
-            if (!$auction) {
-                sendResponse(['error' => 'Enchère introuvable.'], 404);
+            $stmt->execute([$user_id]);
+            $purchases = $stmt->fetchAll();
+            foreach ($purchases as &$p) {
+                if (isset($p['Images'])) $p['Images'] = json_decode($p['Images'], true);
             }
-            $stmt = $pdo->prepare(
-                "SELECT b.amount, b.bid_time, u.username
-                 FROM bids b JOIN users u ON b.user_id = u.id
-                 WHERE b.auction_id = ?
-                 ORDER BY b.bid_time DESC LIMIT 10"
-            );
-            $stmt->execute([$auction['id']]);
-            $auction['history'] = $stmt->fetchAll();
-            sendResponse($auction);
+            sendResponse($purchases);
         } catch (PDOException $e) {
-            sendResponse(['error' => 'Erreur BDD.'], 500);
+            sendResponse(['error' => $e->getMessage()], 500);
         }
         break;
 
@@ -123,73 +127,67 @@ switch ($action) {
             sendResponse(['error' => 'Méthode non autorisée'], 405);
         }
         $input   = json_decode(file_get_contents('php://input'), true);
-        $item_id = isset($input['item_id'])  ? (int)$input['item_id']   : 0;
+        $ad_id   = isset($input['ad_id'])    ? (int)$input['ad_id']     : 0;
         $user_id = isset($input['user_id'])  ? (int)$input['user_id']   : 0;
         $amount  = isset($input['amount'])   ? (float)$input['amount']  : 0;
 
-        if (!$item_id || !$user_id || $amount <= 0) {
+        if (!$ad_id || !$user_id || $amount <= 0) {
             sendResponse(['error' => 'Données incomplètes.'], 400);
         }
 
         try {
-            $stmt = $pdo->prepare("SELECT id, name, seller_id FROM items WHERE id = ?");
-            $stmt->execute([$item_id]);
-            $item_row = $stmt->fetch();
-            if ($item_row && (int)$item_row['seller_id'] === $user_id) {
+            // On vérifie l'existence de l'annonce et l'auteur
+            $stmt = $pdo->prepare("SELECT ID, Titre, Utilisateur_ID, Prix, Date_Fin_Enchere FROM ANNONCE WHERE ID = ?");
+            $stmt->execute([$ad_id]);
+            $ad = $stmt->fetch();
+
+            if (!$ad) {
+                sendResponse(['error' => 'Annonce introuvable.'], 404);
+            }
+            if ((int)$ad['Utilisateur_ID'] === $user_id) {
                 sendResponse(['error' => "Vous ne pouvez pas enchérir sur votre propre annonce."], 403);
+            }
+            
+            // Vérification de la date de fin
+            if (strtotime($ad['Date_Fin_Enchere']) < time()) {
+                sendResponse(['error' => "L'enchère est terminée."], 400);
+            }
+
+            // Vérification du montant (doit être > prix actuel)
+            if ($amount <= (float)$ad['Prix']) {
+                sendResponse(['error' => "Votre offre doit être supérieure au prix actuel (" . $ad['Prix'] . " €)."], 400);
             }
 
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare(
-                "SELECT id, current_bid, highest_bidder_id, status FROM auctions WHERE item_id = ? FOR UPDATE"
-            );
-            $stmt->execute([$item_id]);
-            $auction = $stmt->fetch();
+            // On récupère le dernier enchérisseur pour le notifier
+            $stmt = $pdo->prepare("SELECT user_id FROM bids WHERE ad_id = ? ORDER BY amount DESC LIMIT 1");
+            $stmt->execute([$ad_id]);
+            $last_bidder = $stmt->fetch();
 
-            if (!$auction) {
-                $pdo->rollBack();
-                sendResponse(['error' => 'Enchère introuvable pour cet article.'], 404);
-            }
-            if ($auction['status'] !== 'active') {
-                $pdo->rollBack();
-                sendResponse(['error' => "L'enchère est terminée."], 400);
-            }
-            if ($amount <= (float)$auction['current_bid']) {
-                $pdo->rollBack();
-                sendResponse([
-                    'error' => "L'offre doit être strictement supérieure à l'enchère actuelle de "
-                               . number_format($auction['current_bid'], 2, ',', ' ') . " €."
-                ], 400);
-            }
+            // Mise à jour de l'annonce avec le nouveau prix
+            $stmt = $pdo->prepare("UPDATE ANNONCE SET Prix = ? WHERE ID = ?");
+            $stmt->execute([$amount, $ad_id]);
 
-            $stmt = $pdo->prepare(
-                "UPDATE auctions SET current_bid = ?, highest_bidder_id = ? WHERE id = ?"
-            );
-            $stmt->execute([$amount, $user_id, $auction['id']]);
-
-            $stmt = $pdo->prepare(
-                "INSERT INTO bids (auction_id, user_id, amount) VALUES (?, ?, ?)"
-            );
-            $stmt->execute([$auction['id'], $user_id, $amount]);
+            // Enregistrement de l'enchère dans l'historique
+            $stmt = $pdo->prepare("INSERT INTO bids (ad_id, user_id, amount) VALUES (?, ?, ?)");
+            $stmt->execute([$ad_id, $user_id, $amount]);
 
             $pdo->commit();
 
-            // Notifier l'ancien meilleur enchérisseur s'il existe et n'est pas le nouvel enchérisseur
-            $prev_bidder = $auction['highest_bidder_id'] ? (int)$auction['highest_bidder_id'] : null;
-            if ($prev_bidder && $prev_bidder !== $user_id) {
-                $item_name = $item_row['name'] ?? 'un article';
-                addNotification($pdo, $prev_bidder, "Vous avez été dépassé sur l'enchère \"{$item_name}\" — nouvelle offre : " . number_format($amount, 2, ',', ' ') . " €.");
+            // Notification pour le vendeur
+            create_notification($pdo, $ad['Utilisateur_ID'], 'offre', "Nouvelle enchère de " . $amount . " € sur votre annonce : " . $ad['Titre'], "/product/" . $ad_id);
+
+            // Notification pour l'ancien meilleur enchérisseur
+            if ($last_bidder && (int)$last_bidder['user_id'] !== $user_id) {
+                create_notification($pdo, $last_bidder['user_id'], 'offre', "Vous avez été dépassé sur l'annonce : " . $ad['Titre'], "/product/" . $ad_id);
             }
 
-            sendResponse([
-                'success' => true,
-                'message' => "Enchère de " . number_format($amount, 2, ',', ' ') . " € placée avec succès !",
-                'new_bid' => $amount
-            ]);
+            sendResponse(['success' => true, 'message' => "Enchère placée !", 'new_price' => $amount]);
+
         } catch (PDOException $e) {
-            $pdo->rollBack();
-            sendResponse(['error' => "Erreur serveur lors de l'enchère."], 500);
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            sendResponse(['error' => 'Erreur serveur : ' . $e->getMessage()], 500);
         }
         break;
 
@@ -198,24 +196,47 @@ switch ($action) {
             sendResponse(['error' => 'Méthode non autorisée'], 405);
         }
         $input   = json_decode(file_get_contents('php://input'), true);
-        $item_id = isset($input['item_id']) ? (int)$input['item_id'] : 0;
+        $ad_id   = isset($input['ad_id']) ? (int)$input['ad_id'] : 0;
         $user_id = isset($input['user_id']) ? (int)$input['user_id'] : 0;
 
-        if (!$item_id || !$user_id) {
+        if (!$ad_id || !$user_id) {
             sendResponse(['error' => 'Données incomplètes.'], 400);
         }
 
         try {
-            $stmt = $pdo->prepare("SELECT id, name, status, seller_id FROM items WHERE id = ?");
-            $stmt->execute([$item_id]);
-            $item = $stmt->fetch();
+            $stmt = $pdo->prepare("SELECT ID, Titre, Utilisateur_ID, Prix FROM ANNONCE WHERE ID = ?");
+            $stmt->execute([$ad_id]);
+            $ad = $stmt->fetch();
 
-            if (!$item) {
-                sendResponse(['error' => 'Article introuvable.'], 404);
+            if (!$ad) {
+                sendResponse(['error' => 'Annonce introuvable.'], 404);
             }
-            if ((int)$item['seller_id'] === $user_id) {
+            if ((int)$ad['Utilisateur_ID'] === $user_id) {
                 sendResponse(['error' => "Vous ne pouvez pas acheter votre propre article."], 403);
             }
+
+            $pdo->beginTransaction();
+
+            // Ici on pourrait marquer l'annonce comme vendue dans une colonne 'Statut'
+            // Mais pour l'instant on va juste enregistrer l'achat et notifier
+            $stmt = $pdo->prepare("INSERT INTO purchases (ad_id, buyer_id, amount) VALUES (?, ?, ?)");
+            $stmt->execute([$ad_id, $user_id, $ad['Prix']]);
+
+            $pdo->commit();
+
+            // Notification pour le vendeur
+            create_notification($pdo, $ad['Utilisateur_ID'], 'commande', "Votre article \"" . $ad['Titre'] . "\" a été acheté par un client !", "/dashboard");
+            
+            // Notification pour l'acheteur
+            create_notification($pdo, $user_id, 'commande', "Félicitations ! Votre achat de \"" . $ad['Titre'] . "\" est validé.", "/dashboard");
+
+            sendResponse(['success' => true, 'message' => "Achat effectué avec succès !"]);
+
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            sendResponse(['error' => 'Erreur serveur : ' . $e->getMessage()], 500);
+        }
+        break;
             if ($item['status'] === 'sold') {
                 sendResponse(['error' => 'Cet article a déjà été vendu.'], 400);
             }

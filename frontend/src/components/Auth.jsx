@@ -43,7 +43,7 @@ const Auth = () => {
         }
 
         try {
-            const response = await fetch('http://localhost/backend/register.php', {
+            const response = await fetch('/backend/register.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(registerData)
@@ -69,7 +69,7 @@ const Auth = () => {
         }
 
         try {
-            const response = await fetch('http://localhost/backend/login.php', {
+            const response = await fetch('/backend/login.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(loginData)

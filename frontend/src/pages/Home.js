@@ -3,9 +3,13 @@ import React, { useState, useEffect } from 'react';
 function Home({ onNavigateToAuction }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('Toutes');
 
-  useEffect(() => {
-    fetch('/backend/index.php?action=items')
+  const fetchItems = () => {
+    setLoading(true);
+    const url = `/backend/index.php?action=items&search=${encodeURIComponent(search)}&category=${encodeURIComponent(category)}`;
+    fetch(url)
       .then(res => res.json())
       .then(data => {
         setItems(data);
@@ -15,27 +19,31 @@ function Home({ onNavigateToAuction }) {
         console.error("Erreur lors de la récupération des articles:", err);
         setLoading(false);
       });
-  }, []);
+  };
+
+  useEffect(() => {
+    fetchItems();
+  }, [category]); // Re-fetch quand la catégorie change
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    fetchItems();
+  };
 
   const handleActionClick = (item) => {
-    if (item.sale_type === 'auction') {
-      onNavigateToAuction(item.id);
-    } else {
-      alert(`Action pour ${item.name} (${item.sale_type}) bientôt disponible !`);
-    }
+    onNavigateToAuction(item.ID); // On utilise l'ID de la table ANNONCE
   };
 
   const getBadgeColor = (type) => {
     switch (type) {
-      case 'immediate': return '#28a745';
-      case 'auction': return '#ffc107';
-      case 'negotiation': return '#17a2b8';
+      case 'Achat immédiat': return '#28a745';
+      case 'Enchère': return '#ffc107';
       default: return '#6c757d';
     }
   };
 
   const getConditionLabel = (condition) => {
-    return condition === 'new' ? 'Neuf' : 'Occasion';
+    return condition; // Les labels sont déjà en français dans la table ANNONCE
   };
 
   if (loading) return <div style={{ textAlign: 'center', padding: '50px' }}>Chargement du matériel...</div>;
@@ -45,18 +53,42 @@ function Home({ onNavigateToAuction }) {
       <section className="hero-section">
         <h2 style={{ color: 'var(--primary-blue)', marginTop: 0 }}>Vagues, Vent & Passion</h2>
         <p>Le comptoir n°1 pour votre matériel de voile légère. Trouvez la perle rare ou vendez votre équipement à la communauté.</p>
+        
+        {/* Barre de recherche */}
+        <form onSubmit={handleSearchSubmit} style={{ margin: '20px 0', display: 'flex', gap: '10px' }}>
+          <input 
+            type="text" 
+            placeholder="Rechercher une aile, un foil, une planche..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ 
+              flex: 1, padding: '12px 20px', borderRadius: '25px', 
+              border: '2px solid var(--secondary-blue)', outline: 'none' 
+            }}
+          />
+          <button type="submit" className="btn-marine" style={{ width: 'auto', padding: '0 25px', borderRadius: '25px' }}>
+            <i className="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </form>
+
+        {/* Filtres par catégorie */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '20px' }}>
-          {['Surf', 'Windsurf', 'Windfoil', 'Wingfoil', 'Pumpfoil', 'Kitesurf', 'Kitefoil'].map(cat => (
-            <span key={cat} style={{ 
-              background: 'var(--white)', 
-              padding: '8px 18px', 
-              borderRadius: '25px', 
-              fontSize: '0.85rem', 
-              border: '2px solid var(--secondary-blue)', 
-              color: 'var(--secondary-blue)', 
-              fontWeight: 'bold',
-              cursor: 'pointer' 
-            }}>
+          {['Toutes', 'Wingfoil', 'Kitesurf', 'Accessoire', 'Néoprène', 'Planche à voile', 'Pièce détachée'].map(cat => (
+            <span 
+              key={cat} 
+              onClick={() => setCategory(cat)}
+              style={{ 
+                background: category === cat ? 'var(--secondary-blue)' : 'var(--white)', 
+                padding: '8px 18px', 
+                borderRadius: '25px', 
+                fontSize: '0.85rem', 
+                border: '2px solid var(--secondary-blue)', 
+                color: category === cat ? 'var(--white)' : 'var(--secondary-blue)', 
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
               {cat}
             </span>
           ))}
@@ -65,45 +97,50 @@ function Home({ onNavigateToAuction }) {
 
       <div className="item-grid">
         {items.map(item => (
-          <div key={item.id} className="item-card">
+          <div key={item.ID} className="item-card" onClick={() => handleActionClick(item)} style={{cursor: 'pointer'}}>
             <div className="card-image-container" style={{ 
-              backgroundImage: `url(${item.image_url})`, 
+              backgroundImage: `url(${Array.isArray(item.Images) ? item.Images[0] : ''})`, 
               backgroundSize: 'cover', 
               backgroundPosition: 'center'
             }}>
               <span className="card-badge-condition">
-                {getConditionLabel(item.item_condition)}
+                {getConditionLabel(item.Etat)}
               </span>
             </div>
             
             <div className="card-content">
-              <span className="card-category">{item.category}</span>
-              <h3 className="card-title">{item.name}</h3>
+              <span className="card-category">{item.Categorie}</span>
+              <h3 className="card-title">{item.Titre}</h3>
               <p style={{ fontSize: '0.9rem', color: '#666', height: '40px', overflow: 'hidden', marginBottom: '15px' }}>
-                {item.description}
+                {item.Description}
               </p>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <span className="card-price">{item.price} €</span>
+                <span className="card-price">{item.Prix} €</span>
                 <span style={{ 
                   fontSize: '0.65rem', 
                   padding: '4px 10px', 
                   borderRadius: '4px', 
                   color: 'white', 
-                  background: getBadgeColor(item.sale_type),
+                  background: getBadgeColor(item.Type_de_vente),
                   fontWeight: 'bold',
                   textTransform: 'uppercase'
                 }}>
-                  {item.sale_type === 'immediate' ? 'Achat Direct' : item.sale_type === 'auction' ? 'Enchère' : 'Négociation'}
+                  {item.Type_de_vente}
                 </span>
               </div>
               
-              <button 
-                onClick={() => handleActionClick(item)}
-                className={`btn-marine ${item.sale_type === 'auction' ? 'btn-accent' : ''}`}
-              >
-                {item.sale_type === 'auction' ? '⚓ Enchérir' : 'Voir les détails'}
-              </button>
+              {item.Type_de_vente === 'Enchère' && (
+                  <div style={{fontSize: '0.8rem', color: '#d35400', fontWeight: 'bold', marginBottom: '10px'}}>
+                      <i className="fa-regular fa-clock"></i> Enchère en cours
+                  </div>
+              )}
+
+              {item.Accepte_Nego === 1 && (
+                  <div style={{fontSize: '0.8rem', color: '#0074b7', marginBottom: '10px'}}>
+                      <i className="fa-solid fa-comments"></i> Négociation possible
+                  </div>
+              )}
             </div>
           </div>
         ))}
