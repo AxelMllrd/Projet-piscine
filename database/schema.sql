@@ -97,12 +97,14 @@ CREATE TABLE IF NOT EXISTS negotiation_messages (
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Table des notifications
-CREATE TABLE IF NOT EXISTS notifications (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    message TEXT NOT NULL,
-    is_read BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+-- Table des notifications (Version centralisée)
+CREATE TABLE IF NOT EXISTS NOTIFICATION (
+    ID INT AUTO_INCREMENT PRIMARY KEY,
+    Utilisateur_ID INT NOT NULL,
+    Type ENUM('favori', 'offre', 'message', 'commande') NOT NULL,
+    Contenu VARCHAR(255) NOT NULL,
+    Lien_Action VARCHAR(255),
+    Est_Lu BOOLEAN DEFAULT FALSE,
+    Date_Creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Utilisateur_ID) REFERENCES users(id) ON DELETE CASCADE
 );

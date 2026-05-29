@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Home from './pages/Home';
 import AuctionPage from './pages/AuctionPage';
+import Header from './components/Header';
 
 function App() {
   const [status, setStatus] = useState('Chargement...');
@@ -11,7 +12,7 @@ function App() {
     fetch('/backend/index.php?action=status')
       .then(res => res.json())
       .then(data => setStatus(data.message || 'Connecté au backend'))
-      .catch(err => setStatus('Connexion backend en attente...'));
+      .catch(() => setStatus('Connexion backend en attente...'));
   }, []);
 
   const navigateToAuction = (id) => {
@@ -27,18 +28,7 @@ function App() {
 
   return (
     <div className="app-container">
-      <header className="app-header">
-        <h1 className="app-logo" onClick={navigateToHome}>
-          ⚓ Mercato Nova
-        </h1>
-        <p className="app-subtitle">Le magasinage en ligne de notre époque - Spécialiste Voile Légère</p>
-        <div style={{ marginTop: '10px' }}>
-          <span style={{ fontSize: '0.8rem', padding: '4px 10px', borderRadius: '15px', background: 'rgba(255,255,255,0.2)' }}>
-            <span style={{ color: status.includes('Erreur') || status.includes('attente') ? '#ffccbc' : '#b9f6ca', marginRight: '5px' }}>●</span>
-            {status}
-          </span>
-        </div>
-      </header>
+      <Header status={status} onNavigateHome={navigateToHome} />
       
       <main className="main-content">
         {currentPage === 'home' ? (
