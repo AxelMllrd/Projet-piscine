@@ -36,7 +36,7 @@ if (!empty($data->identifier) && !empty($data->password)) {
                     "user" => [
                         "id" => $id,
                         "username" => $username,
-                        "email" => $email,
+                        "email" => $row['email'],
                         "role" => $role
                     ]
                 ]);

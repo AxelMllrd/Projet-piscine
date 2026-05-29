@@ -543,7 +543,8 @@
                                 <span style="font-size:0.85rem; color:var(--text-muted);">Prix actuel</span>
                                 <span class="current-price" id="auction-price-display">390 €</span>
                             </div>
-                            <button class="btn-action btn-bid">Placer une enchère</button>
+                            <input type="number" id="bid-input" min="0" step="1" placeholder="Votre offre en €" style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:1.1rem;text-align:center;box-sizing:border-box;margin-bottom:10px;">
+                            <button class="btn-action btn-bid" id="btn-place-bid">Placer une enchère</button>
                         </div>
                         <div id="buy-action-panel" class="buy-panel">
                             <h2 id="buy-item-name">Produit</h2>
@@ -552,7 +553,7 @@
                                 <p style="font-size:2.2rem; font-weight:800; margin:5px 0;" id="buy-price-display">850 €</p>
                                 <p style="font-size:0.9rem; margin:10px 0 0 0;">Vendeur: <strong>WingPro 🌟 4.7</strong></p>
                             </div>
-                            <button class="btn-action btn-buy">Acheter maintenant</button>
+                            <button class="btn-action btn-buy" id="btn-buy-now">Acheter maintenant</button>
                             <button class="btn-action btn-cart">Ajouter au panier</button>
                             <button onclick="showView('negotiation')" style="background:none; border:none; color:var(--text-muted); cursor:pointer; width:100%; margin-top:15px; font-size:0.9rem;"><i class="fa-regular fa-comments"></i> Proposer un prix</button>
                         </div>
@@ -624,91 +625,52 @@
     </footer>
 
     <script>
-        const products = [
-            { id: 1, name: 'Voile Vintage Collector', price: 390, type: 'auction', icon: 'fa-gavel' },
-            { id: 2, name: 'Planche wingfoil Duotone', price: 850, type: 'buy', icon: 'fa-box-open' },
-            { id: 3, name: 'Kite Surf North Reach', price: 620, type: 'auction', icon: 'fa-gavel' },
-            { id: 4, name: 'Aileron Carbone', price: 120, type: 'buy', icon: 'fa-box-open' },
-            { id: 5, name: 'Combinaison Néoprène', price: 180, type: 'buy', icon: 'fa-box-open' },
-            { id: 6, name: 'Mât Carbone 400', price: 310, type: 'auction', icon: 'fa-gavel' }
-        ];
-
+        // Cache des produits chargés depuis l'API
+        let products = [];
+        let currentProduct = null;
         let isLoggedIn = false;
         let currentUser = null;
 
-        function handleProfileClick() {
-            if (!isLoggedIn) {
-                showView('auth');
-            } else {
-                showView('dashboard');
+        // ===== HELPERS UI =====
+
+        function showGridError(message) {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = `
+                <div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:#e74c3c;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size:2.5rem; display:block; margin-bottom:15px;"></i>
+                    <p style="font-weight:600; font-size:1rem; margin:0 0 15px;">${message}</p>
+                    <button onclick="renderCatalogue()" style="padding:8px 20px; border:1px solid #e74c3c; background:white; color:#e74c3c; border-radius:6px; cursor:pointer; font-weight:600;">
+                        <i class="fa-solid fa-rotate-right"></i> Réessayer
+                    </button>
+                </div>`;
+            document.getElementById('results-count').innerText = '0 produit trouvé';
+        }
+
+        function showBidFeedback(message, isError = true) {
+            let el = document.getElementById('bid-feedback');
+            if (!el) {
+                el = document.createElement('p');
+                el.id = 'bid-feedback';
+                el.style.cssText = 'font-weight:600; font-size:0.88rem; margin:10px 0 0; text-align:center;';
+                document.getElementById('btn-place-bid').insertAdjacentElement('afterend', el);
             }
+            el.style.color = isError ? 'var(--danger-red)' : 'var(--success-green)';
+            el.innerText = message;
+            if (!isError) setTimeout(() => { el.innerText = ''; }, 5000);
+        }
+
+        // ===== AUTH =====
+
+        function handleProfileClick() {
+            if (!isLoggedIn) showView('auth');
+            else showView('dashboard');
         }
 
         function handleVendreClick() {
             if (!isLoggedIn) {
-                alert("Vous devez être connecté pour publier une annonce.");
                 showView('auth');
             } else {
                 showView('create-ad');
-            }
-        }
-
-        function previewImages(event) {
-            const grid = document.getElementById('image-previews');
-            grid.innerHTML = '';
-            const files = event.target.files;
-            
-            for (const file of files) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'preview-item';
-                    grid.appendChild(img);
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        async function handleCreateAd(event) {
-            event.preventDefault();
-            
-            if (!isLoggedIn) {
-                alert("Session expirée. Veuillez vous reconnecter.");
-                return;
-            }
-
-            const form = event.target;
-            const formData = new FormData(form);
-            formData.append('user_id', currentUser.id);
-
-            // Validation des fichiers
-            const files = document.getElementById('ad-images').files;
-            if (files.length === 0) {
-                alert("Veuillez ajouter au moins une photo.");
-                return;
-            }
-
-            try {
-                const response = await fetch('backend/create_ad.php', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert("Annonce publiée avec succès !");
-                    form.reset();
-                    document.getElementById('image-previews').innerHTML = '';
-                    await updateDashboard();
-                    showView('dashboard');
-                } else {
-                    alert(data.message || "Erreur lors de la publication.");
-                }
-            } catch (error) {
-                console.error("Erreur publication:", error);
-                alert("Erreur de connexion au serveur.");
             }
         }
 
@@ -719,11 +681,11 @@
         }
 
         async function handleLogin() {
-            const identifier = document.getElementById('login-id').value;
+            const identifier = document.getElementById('login-id').value.trim();
             const password = document.getElementById('login-pass').value;
 
             if (!identifier || !password) {
-                alert("Veuillez remplir tous les champs.");
+                alert('Veuillez remplir tous les champs.');
                 return;
             }
 
@@ -739,38 +701,34 @@
                 if (response.ok) {
                     isLoggedIn = true;
                     currentUser = data.user;
-                    // On simule quelques données additionnelles pour le dashboard
-                    currentUser.email = data.user.email || (identifier.includes('@') ? identifier : `${data.user.username}@voile.fr`);
-                    
                     document.getElementById('profile-btn').innerHTML = '<i class="fa-solid fa-user-check" style="color:var(--success-green)"></i>';
                     await updateDashboard();
                     showView('home');
-                    alert("Connexion réussie ! Bienvenue " + currentUser.username);
+                    alert('Connexion réussie ! Bienvenue ' + currentUser.username);
                 } else {
-                    alert(data.message || "Erreur lors de la connexion.");
+                    alert(data.message || 'Identifiants incorrects.');
                 }
             } catch (error) {
-                console.error("Erreur login:", error);
-                alert("Erreur de connexion au serveur.");
+                console.error('Erreur login:', error);
+                alert('Impossible de joindre le serveur. Vérifiez votre connexion.');
             }
         }
 
         async function handleRegister() {
-            const nom = document.getElementById('reg-nom').value;
-            const prenom = document.getElementById('reg-prenom').value;
-            const username = document.getElementById('reg-user').value;
-            const email = document.getElementById('reg-email').value;
+            const nom      = document.getElementById('reg-nom').value.trim();
+            const prenom   = document.getElementById('reg-prenom').value.trim();
+            const username = document.getElementById('reg-user').value.trim();
+            const email    = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-pass').value;
-            const role = document.getElementById('reg-role').value;
-            const cgu = document.getElementById('reg-cgu').checked;
+            const role     = document.getElementById('reg-role').value;
+            const cgu      = document.getElementById('reg-cgu').checked;
 
-            if (!nom || !prenom || !username || !email || !password || !role) {
-                alert("Veuillez remplir tous les champs.");
+            if (!nom || !prenom || !username || !email || !password) {
+                alert('Veuillez remplir tous les champs.');
                 return;
             }
-
             if (!cgu) {
-                alert("Vous devez accepter les CGU.");
+                alert('Vous devez accepter les CGU.');
                 return;
             }
 
@@ -784,40 +742,36 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert("Inscription réussie ! Vous pouvez maintenant vous connecter.");
-                    toggleAuth(true); // Redirige vers le formulaire de connexion
+                    alert('Inscription réussie ! Vous pouvez maintenant vous connecter.');
+                    toggleAuth(true);
                 } else {
                     alert(data.message || "Erreur lors de l'inscription.");
                 }
             } catch (error) {
-                console.error("Erreur register:", error);
-                alert("Erreur de connexion au serveur.");
+                console.error('Erreur register:', error);
+                alert('Impossible de joindre le serveur. Vérifiez votre connexion.');
             }
         }
 
         async function updateDashboard() {
             if (!currentUser) return;
-            
+
             document.getElementById('user-display-name').innerText = currentUser.username;
             document.getElementById('info-username').innerText = '@' + currentUser.username;
             document.getElementById('info-email').innerText = currentUser.email;
             document.getElementById('info-role').innerText = currentUser.role;
-            
-            // Avatar selon le rôle
             document.getElementById('user-avatar').innerText = currentUser.role === 'vendeur' ? '🚢' : '⚓';
 
             try {
                 const response = await fetch(`backend/get_user_stats.php?user_id=${currentUser.id}`);
                 const data = await response.json();
-                
                 if (data.success) {
                     document.getElementById('stat-buys').innerText = data.stats.buys;
                     document.getElementById('stat-bids').innerText = data.stats.bids;
                     document.getElementById('stat-sales').innerText = data.stats.sales;
                 }
             } catch (error) {
-                console.error("Erreur stats:", error);
-                // On laisse les valeurs par défaut si erreur
+                console.error('Erreur stats:', error);
             }
         }
 
@@ -826,13 +780,263 @@
             currentUser = null;
             document.getElementById('profile-btn').innerHTML = '<i class="fa-regular fa-user"></i>';
             showView('home');
-            alert("Vous avez été déconnecté.");
+            alert('Vous avez été déconnecté.');
         }
+
+        // ===== CATALOGUE =====
+
+        const CATEGORY_MAP = {
+            'Wingfoil':          'wingfoil',
+            'Planche à voile':   'windsurf',
+            'Kitesurf':          'kitesurf',
+            'Accessoires':       'accessoires',
+            'Néoprène':          'neoprene',
+            'Pièces détachées':  'pieces'
+        };
+
+        async function renderCatalogue(category) {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = `
+                <div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-muted);">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; display:block; margin-bottom:15px;"></i>
+                    <p>Chargement des annonces...</p>
+                </div>`;
+            document.getElementById('results-count').innerText = 'Chargement...';
+
+            try {
+                const response = await fetch('backend/index.php?action=items');
+                if (!response.ok) throw new Error(`Erreur serveur (${response.status})`);
+
+                const data = await response.json();
+                if (!Array.isArray(data)) throw new Error('Réponse invalide du serveur');
+
+                products = data;
+
+                const apiCategory = category ? CATEGORY_MAP[category] : null;
+                const filtered = apiCategory
+                    ? products.filter(p => p.category === apiCategory)
+                    : products;
+
+                const count = filtered.length;
+                document.getElementById('results-count').innerText =
+                    `${count} produit${count > 1 ? 's' : ''} trouvé${count > 1 ? 's' : ''}`;
+
+                if (count === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-muted);">
+                            <i class="fa-solid fa-wind" style="font-size:2rem; display:block; margin-bottom:15px;"></i>
+                            <p>Aucune annonce dans cette catégorie pour le moment.</p>
+                        </div>`;
+                    return;
+                }
+
+                grid.innerHTML = filtered.map(p => {
+                    const icon = p.sale_type === 'auction' ? 'fa-gavel' : 'fa-cart-shopping';
+                    const fallbackIcon = p.sale_type === 'auction' ? 'fa-gavel' : 'fa-box-open';
+                    const imgStyle = p.image_url
+                        ? `background-image:url('${p.image_url}');background-size:cover;background-position:center;`
+                        : '';
+                    const imgContent = p.image_url ? '' : `<i class="fa-solid ${fallbackIcon}"></i>`;
+                    return `
+                        <div class="product-card" onclick="showDetail(${p.id})">
+                            <div class="item-img-placeholder" style="${imgStyle}">${imgContent}</div>
+                            <div class="item-info">
+                                <div style="font-weight:700; margin-bottom:5px;">${p.name}</div>
+                                <div style="color:var(--primary-blue); font-weight:800;">${p.price} €</div>
+                                <div class="card-icons"><i class="fa-solid ${icon}"></i></div>
+                            </div>
+                        </div>`;
+                }).join('');
+
+            } catch (error) {
+                console.error('Erreur catalogue:', error);
+                showGridError('Impossible de charger les annonces. Le serveur est peut-être indisponible.');
+            }
+        }
+
+        // ===== DETAIL VIEW =====
+
+        function showDetail(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+
+            currentProduct = product;
+            showView('detail');
+            document.getElementById('bc-prod').innerText = product.name;
+
+            // Image principale
+            const imgEl = document.getElementById('detail-icon-placeholder');
+            if (product.image_url) {
+                imgEl.style.backgroundImage = `url('${product.image_url}')`;
+                imgEl.style.backgroundSize = 'cover';
+                imgEl.style.backgroundPosition = 'center';
+                imgEl.innerHTML = '';
+            } else {
+                imgEl.style.backgroundImage = '';
+                imgEl.innerHTML = `<i class="fa-solid ${product.sale_type === 'auction' ? 'fa-gavel' : 'fa-box-open'}"></i>`;
+            }
+
+            if (product.sale_type === 'auction') {
+                document.getElementById('auction-action-panel').style.display = 'block';
+                document.getElementById('buy-action-panel').style.display = 'none';
+                document.getElementById('auction-price-display').innerText = product.price + ' €';
+                document.getElementById('bid-input').value = '';
+                const bidFeedback = document.getElementById('bid-feedback');
+                if (bidFeedback) bidFeedback.innerText = '';
+                document.getElementById('btn-place-bid').onclick = () => handlePlaceBid(product.id, product.price);
+            } else {
+                document.getElementById('auction-action-panel').style.display = 'none';
+                document.getElementById('buy-action-panel').style.display = 'block';
+                document.getElementById('buy-item-name').innerText = product.name;
+                document.getElementById('buy-price-display').innerText = product.price + ' €';
+                document.getElementById('btn-buy-now').onclick = () => handleBuyNow(product.id, product.price);
+            }
+        }
+
+        // ===== ENCHÈRE =====
+
+        async function handlePlaceBid(itemId, currentBid) {
+            if (!isLoggedIn) {
+                alert('Vous devez être connecté pour placer une enchère.');
+                showView('auth');
+                return;
+            }
+
+            const input = document.getElementById('bid-input');
+            const amount = parseFloat(input.value);
+
+            if (!amount || isNaN(amount) || amount <= 0) {
+                showBidFeedback('Veuillez saisir un montant valide.');
+                return;
+            }
+            if (amount <= currentBid) {
+                showBidFeedback(`L'enchère doit dépasser ${currentBid} €.`);
+                return;
+            }
+
+            try {
+                const response = await fetch('backend/index.php?action=place_bid', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ auction_id: itemId, amount, current_bid: currentBid })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    document.getElementById('auction-price-display').innerText = amount + ' €';
+                    input.value = '';
+                    const p = products.find(x => x.id === itemId);
+                    if (p) p.price = amount;
+                    // Mettre à jour le handler avec le nouveau prix courant
+                    document.getElementById('btn-place-bid').onclick = () => handlePlaceBid(itemId, amount);
+                    showBidFeedback(data.message || 'Enchère placée !', false);
+                } else {
+                    showBidFeedback(data.error || 'Erreur lors de la soumission.');
+                }
+            } catch (error) {
+                console.error('Erreur enchère:', error);
+                showBidFeedback('Impossible de joindre le serveur. Vérifiez votre connexion.');
+            }
+        }
+
+        // ===== ACHAT IMMÉDIAT =====
+
+        async function handleBuyNow(itemId, price) {
+            if (!isLoggedIn) {
+                alert('Vous devez être connecté pour acheter.');
+                showView('auth');
+                return;
+            }
+
+            if (!confirm(`Confirmer l'achat pour ${price} € ?`)) return;
+
+            try {
+                const response = await fetch('backend/index.php?action=place_buy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item_id: itemId, user_id: currentUser.id })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    alert(data.message || 'Achat confirmé !');
+                    showView('catalogue');
+                } else {
+                    alert(data.error || "Erreur lors de l'achat.");
+                }
+            } catch (error) {
+                console.error('Erreur achat:', error);
+                alert('Impossible de joindre le serveur. Vérifiez votre connexion.');
+            }
+        }
+
+        // ===== CRÉATION D'ANNONCE =====
+
+        function previewImages(event) {
+            const grid = document.getElementById('image-previews');
+            grid.innerHTML = '';
+            for (const file of event.target.files) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-item';
+                    grid.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleCreateAd(event) {
+            event.preventDefault();
+
+            if (!isLoggedIn) {
+                alert('Session expirée. Veuillez vous reconnecter.');
+                showView('auth');
+                return;
+            }
+
+            const files = document.getElementById('ad-images').files;
+            if (files.length === 0) {
+                alert('Veuillez ajouter au moins une photo.');
+                return;
+            }
+
+            const form = event.target;
+            const formData = new FormData(form);
+            formData.append('user_id', currentUser.id);
+
+            try {
+                const response = await fetch('backend/create_ad.php', {
+                    method: 'POST',
+                    body: formData   // multipart/form-data, pas de Content-Type manuel
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Annonce publiée avec succès !');
+                    form.reset();
+                    document.getElementById('image-previews').innerHTML = '';
+                    await updateDashboard();
+                    showView('dashboard');
+                } else {
+                    alert(data.message || 'Erreur lors de la publication.');
+                }
+            } catch (error) {
+                console.error('Erreur publication:', error);
+                alert('Impossible de joindre le serveur. Vérifiez votre connexion.');
+            }
+        }
+
+        // ===== NAVIGATION =====
 
         function showView(viewId, category = null) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId + '-view').classList.add('active');
-            
+
             const bc = document.getElementById('breadcrumbs');
             if (viewId === 'home') {
                 bc.classList.remove('active');
@@ -846,7 +1050,7 @@
                     document.getElementById('bc-prod').style.display = 'inline';
                 } else if (viewId === 'negotiation') {
                     document.getElementById('bc-cat').innerText = 'Mes négociations';
-                    document.getElementById('bc-prod').innerText = 'Planche wingfoil Duotone';
+                    document.getElementById('bc-prod').innerText = currentProduct ? currentProduct.name : 'Négociation';
                     document.getElementById('bc-prod').style.display = 'inline';
                 } else if (viewId === 'create-ad') {
                     document.getElementById('bc-cat').innerText = 'Vendre';
@@ -854,37 +1058,6 @@
                 }
             }
             window.scrollTo(0, 0);
-        }
-
-        function renderCatalogue(category) {
-            const grid = document.getElementById('products-grid');
-            grid.innerHTML = products.map(p => `
-                <div class="product-card" onclick="showDetail(${p.id})">
-                    <div class="item-img-placeholder"><i class="fa-solid ${p.icon}"></i></div>
-                    <div class="item-info">
-                        <div style="font-weight:700; margin-bottom:5px;">${p.name}</div>
-                        <div style="color:var(--primary-blue); font-weight:800;">${p.price} €</div>
-                        <div class="card-icons"><i class="fa-solid ${p.type==='auction'?'fa-gavel':'fa-cart-shopping'}"></i></div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function showDetail(id) {
-            const product = products.find(p => p.id === id);
-            showView('detail');
-            document.getElementById('bc-prod').innerText = product.name;
-            document.getElementById('detail-icon-placeholder').innerHTML = `<i class="fa-solid ${product.icon}"></i>`;
-            if (product.type === 'auction') {
-                document.getElementById('auction-action-panel').style.display = 'block';
-                document.getElementById('buy-action-panel').style.display = 'none';
-                document.getElementById('auction-price-display').innerText = product.price + " €";
-            } else {
-                document.getElementById('auction-action-panel').style.display = 'none';
-                document.getElementById('buy-action-panel').style.display = 'block';
-                document.getElementById('buy-item-name').innerText = product.name;
-                document.getElementById('buy-price-display').innerText = product.price + " €";
-            }
         }
 
         showView('home');

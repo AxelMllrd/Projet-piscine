@@ -1,4 +1,15 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json; charset=UTF-8");
+header("Access-Control-Allow-Methods: GET, POST");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
+// Preflight OPTIONS
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
+
 require_once 'config.php';
 
 // Routeur basique
@@ -87,47 +98,41 @@ switch ($action) {
         break;
 
     case 'place_bid':
-        // Simulation d'une offre (En conditions réelles, on utiliserait $_POST et des transactions PDO)
-        $auction_id = $_GET['id'] ?? 0;
-        $amount = $_GET['amount'] ?? 0;
-        $user_id = 101; // ID utilisateur simulé (pourrait être récupéré via $_SESSION)
-
-        // Logique de validation simulée
-        if ($amount <= 620.00) {
-            sendResponse(['error' => 'L\'offre doit être supérieure à l\'enchère actuelle'], 400);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
         }
+        $input = json_decode(file_get_contents('php://input'), true);
+        $auction_id  = isset($input['auction_id'])  ? (int)$input['auction_id']    : 0;
+        $amount      = isset($input['amount'])       ? (float)$input['amount']      : 0;
+        $current_bid = isset($input['current_bid'])  ? (float)$input['current_bid'] : 0;
 
-        // En conditions réelles :
-        /*
-        $pdo->beginTransaction();
-        try {
-            $stmt = $pdo->prepare("SELECT current_bid, end_time, status FROM auctions WHERE id = ? FOR UPDATE");
-            $stmt->execute([$auction_id]);
-            $auction = $stmt->fetch();
-            
-            if ($auction['status'] !== 'active' || strtotime($auction['end_time']) < time()) {
-                throw new Exception("Enchère terminée");
-            }
-            if ($amount <= $auction['current_bid']) {
-                throw new Exception("Offre insuffisante");
-            }
-
-            // Update auction
-            $stmt = $pdo->prepare("UPDATE auctions SET current_bid = ?, highest_bidder_id = ? WHERE id = ?");
-            $stmt->execute([$amount, $user_id, $auction_id]);
-
-            // Insert into history
-            $stmt = $pdo->prepare("INSERT INTO bids (auction_id, user_id, amount) VALUES (?, ?, ?)");
-            $stmt->execute([$auction_id, $user_id, $amount]);
-
-            $pdo->commit();
-            sendResponse(['message' => 'Offre placée avec succès !']);
-        } catch (Exception $e) {
-            $pdo->rollBack();
-            sendResponse(['error' => $e->getMessage()], 400);
+        if (!$auction_id || !$amount) {
+            sendResponse(['error' => 'Données incomplètes.'], 400);
         }
-        */
-        sendResponse(['message' => 'Offre de ' . $amount . ' € placée avec succès !']);
+        if ($amount <= $current_bid) {
+            sendResponse(['error' => "L'offre doit être supérieure à l'enchère actuelle de " . number_format($current_bid, 2, ',', ' ') . " €."], 400);
+        }
+        sendResponse([
+            'success'  => true,
+            'message'  => "Enchère de " . number_format($amount, 2, ',', ' ') . " € placée avec succès !",
+            'new_bid'  => $amount
+        ]);
+        break;
+
+    case 'place_buy':
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            sendResponse(['error' => 'Méthode non autorisée'], 405);
+        }
+        $input   = json_decode(file_get_contents('php://input'), true);
+        $item_id = isset($input['item_id']) ? (int)$input['item_id'] : 0;
+
+        if (!$item_id) {
+            sendResponse(['error' => 'Article non spécifié.'], 400);
+        }
+        sendResponse([
+            'success' => true,
+            'message' => 'Achat confirmé ! Le vendeur vous contactera prochainement.'
+        ]);
         break;
 
     default:

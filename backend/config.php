@@ -7,11 +7,14 @@ define('DB_PASS', '');
 
 // Connexion à la base de données
 try {
-    $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8", DB_USER, DB_PASS);
+    $pdo = new PDO("mysql:host=" . DB_HOST . ";port=3307;dbname=" . DB_NAME . ";charset=utf8", DB_USER, DB_PASS);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    die("Erreur de connexion : " . $e->getMessage());
+    header("Content-Type: application/json");
+    http_response_code(503);
+    echo json_encode(["error" => "Service temporairement indisponible. Veuillez réessayer plus tard."]);
+    exit;
 }
 
 // Fonction pour envoyer une réponse JSON
