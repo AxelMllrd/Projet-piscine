@@ -1,0 +1,8 @@
+TODO :
+Barre de recherche
+Filtres de recherche
+Logo & images générales
+Notifications
+Afficher tout le temps le prix de la dernière enchère
+Pouvoir voir nos ventes dans le tableau de bord
+Actualoiser la liste des achats
