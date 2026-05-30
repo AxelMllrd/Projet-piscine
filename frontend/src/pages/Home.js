@@ -68,6 +68,7 @@ function Home({ onNavigateToAuction, searchQuery }) {
             placeholder="Rechercher une aile, un foil, une planche..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            autocomplete="off"
             style={{ 
               flex: 1, padding: '12px 20px', borderRadius: '25px', 
               border: '2px solid var(--secondary-blue)', outline: 'none' 
