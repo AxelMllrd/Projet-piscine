@@ -554,6 +554,13 @@
                     </div>
                     
                     <div class="dashboard-card" style="margin-top:25px;">
+                        <div class="card-header"><i class="fa-solid fa-boxes-stacked"></i> Mes Annonces en cours</div>
+                        <div id="user-sales-dashboard-list">
+                            <p style="color:var(--text-muted);font-size:0.9rem;text-align:center;padding:10px;">Chargement...</p>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-card" style="margin-top:25px;">
                         <div class="card-header"><i class="fa-solid fa-comments-dollar"></i> Mes Négociations</div>
                         <div id="nego-dashboard-list">
                             <p style="color:var(--text-muted);font-size:0.9rem;text-align:center;padding:10px;">Chargement...</p>
@@ -815,6 +822,16 @@
                 console.error('Erreur negos dashboard:', e);
             }
 
+            try {
+                const salesResp = await fetch(`backend/index.php?action=user_sales&user_id=${currentUser.id}`);
+                if (salesResp.ok) {
+                    const sales = await salesResp.json();
+                    renderUserSales(Array.isArray(sales) ? sales : []);
+                }
+            } catch (e) {
+                console.error('Erreur sales dashboard:', e);
+            }
+
             const notifs = await fetchNotifications();
             renderActivityList(notifs.slice(0, 5));
         }
@@ -849,6 +866,31 @@
                                 <span style="font-weight:600;">${offer}</span>
                                 <span style="font-size:0.75rem;color:${s.color};font-weight:700;">${s.label}</span>
                             </span>
+                        </li>`;
+                }).join('') +
+            '</ul>';
+        }
+
+        function renderUserSales(ads) {
+            const container = document.getElementById('user-sales-dashboard-list');
+            if (!container) return;
+            if (ads.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted);font-size:0.9rem;text-align:center;padding:10px;">Vous n\'avez aucune annonce publiée pour le moment.</p>';
+                return;
+            }
+            container.innerHTML = '<ul class="activity-list">' +
+                ads.map(ad => {
+                    const price = parseFloat(ad.Prix).toLocaleString('fr-FR') + ' €';
+                    const typeLabel = ad.Type_de_vente === 'Enchère' ? 'Enchère' : 'Vente directe';
+                    return `
+                        <li class="activity-item" style="cursor:pointer;" 
+                            onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background=''"
+                            onclick="showDetail(${parseInt(ad.ID)})">
+                            <span>
+                                <strong>${escapeHtml(ad.Titre)}</strong>
+                                <span style="font-size:0.75rem;color:var(--text-muted);margin-left:6px;">(${escapeHtml(typeLabel)})</span>
+                            </span>
+                            <span style="font-weight:600;">${price}</span>
                         </li>`;
                 }).join('') +
             '</ul>';
