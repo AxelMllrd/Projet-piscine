@@ -337,7 +337,7 @@
             <div class="app-logo-text">Mercato Nova</div>
         </div>
         <div class="search-container">
-            <input type="text" class="search-bar" placeholder="Rechercher du matériel nautique...">
+            <input type="text" id="search-bar" name="search" class="search-bar" placeholder="Rechercher du matériel nautique...">
         </div>
         <div class="header-right">
             <button class="btn-vendre" onclick="handleVendreClick()"><i class="fa-solid fa-plus-circle"></i> Vendre</button>
@@ -902,6 +902,8 @@
 
         async function renderCatalogue(category) {
             const grid = document.getElementById('products-grid');
+            const searchQuery = document.getElementById('search-bar').value.trim();
+
             grid.innerHTML = `
                 <div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-muted);">
                     <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; display:block; margin-bottom:15px;"></i>
@@ -910,7 +912,7 @@
             document.getElementById('results-count').innerText = 'Chargement...';
 
             try {
-                const response = await fetch('backend/index.php?action=items');
+                const response = await fetch(`backend/index.php?action=items&q=${encodeURIComponent(searchQuery)}`);
                 if (!response.ok) throw new Error(`Erreur serveur (${response.status})`);
 
                 const data = await response.json();
@@ -1504,6 +1506,13 @@
             }
             showView('home');
         })();
+
+        // Gestion de la recherche via la touche Entrée
+        document.getElementById('search-bar').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                showView('catalogue');
+            }
+        });
 
         // ===== ENCHÈRES - TIMER =====
 

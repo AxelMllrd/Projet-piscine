@@ -11,6 +11,7 @@ function App() {
   const [status, setStatus] = useState('Chargement...');
   const [currentPage, setCurrentPage] = useState('home');
   const [selectedAdId, setSelectedAdId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetch('/backend/index.php?action=status')
@@ -40,9 +41,14 @@ function App() {
     window.scrollTo(0, 0);
   };
 
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    setCurrentPage('home'); // Redirige vers l'accueil pour voir les résultats
+  };
+
   const renderContent = () => {
     switch (currentPage) {
-      case 'home': return <Home onNavigateToAuction={navigateToAd} />;
+      case 'home': return <Home onNavigateToAuction={navigateToAd} searchQuery={searchQuery} />;
       case 'detail': return <ProductDetail adId={selectedAdId} onBack={navigateToHome} />;
       case 'dashboard': return <Dashboard />;
       case 'create': return <CreateAd userId={user?.id} onAdCreated={navigateToDashboard} />;
@@ -57,6 +63,7 @@ function App() {
         onNavigateHome={navigateToHome} 
         onNavigateDashboard={navigateToDashboard}
         onNavigateCreate={navigateToCreateAd}
+        onSearch={handleSearch}
       />
       
       <main className="main-content">

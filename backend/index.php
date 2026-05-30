@@ -60,8 +60,15 @@ switch ($action) {
         break;
     
     case 'items':
+        $q = isset($_GET['q']) ? trim($_GET['q']) : '';
         try {
-            $stmt = $pdo->query("SELECT * FROM items WHERE status = 'active' ORDER BY created_at DESC");
+            if ($q !== '') {
+                $stmt = $pdo->prepare("SELECT * FROM items WHERE status = 'active' AND (name LIKE :q OR description LIKE :q) ORDER BY created_at DESC");
+                $searchTerm = "%$q%";
+                $stmt->execute([':q' => $searchTerm]);
+            } else {
+                $stmt = $pdo->query("SELECT * FROM items WHERE status = 'active' ORDER BY created_at DESC");
+            }
             $items = $stmt->fetchAll();
             sendResponse($items);
         } catch (PDOException $e) {

@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 
-function Home({ onNavigateToAuction }) {
+function Home({ onNavigateToAuction, searchQuery }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchQuery || '');
   const [category, setCategory] = useState('Toutes');
+
+  // Met à jour la recherche locale si searchQuery (prop) change depuis le Header
+  useEffect(() => {
+    if (searchQuery !== undefined) {
+      setSearch(searchQuery);
+    }
+  }, [searchQuery]);
 
   const fetchItems = () => {
     setLoading(true);
-    const url = `/backend/index.php?action=items&search=${encodeURIComponent(search)}&category=${encodeURIComponent(category)}`;
+    const url = `/backend/index.php?action=items&q=${encodeURIComponent(search)}&category=${encodeURIComponent(category)}`;
     fetch(url)
       .then(res => res.json())
       .then(data => {
@@ -23,7 +30,7 @@ function Home({ onNavigateToAuction }) {
 
   useEffect(() => {
     fetchItems();
-  }, [category]); // Re-fetch quand la catégorie change
+  }, [category, searchQuery]); // Re-fetch quand la catégorie ou la recherche change
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
