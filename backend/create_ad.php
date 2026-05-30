@@ -29,15 +29,45 @@ $description = $_POST['description'] ?? null;
 $categorie = $_POST['categorie'] ?? null;
 $etat = $_POST['etat'] ?? null;
 $type_vente = $_POST['type_vente'] ?? null;
-$prix_saisi = $_POST['prix'] ?? null;
+$prix_saisi = $_POST['prix'] ?? 0;
 $accepte_nego = $_POST['accepte_nego'] ?? 0;
+
+// Normalisation de l'Etat (Gestion HTML statique "new/used" et React)
+$etat_map = [
+    'new' => 'Neuf',
+    'used' => 'Bon état',
+    'Neuf' => 'Neuf',
+    'Très bon état' => 'Très bon état',
+    'Bon état' => 'Bon état',
+    'Satisfaisant' => 'Satisfaisant'
+];
+$db_etat = $etat_map[$etat] ?? 'Bon état';
+
+// Normalisation de la Catégorie (Correction de la casse pour l'ENUM MySQL)
+$cat_map = [
+    'wingfoil' => 'Wingfoil', 'kitesurf' => 'Kitesurf',
+    'windsurf' => 'Planche à voile', 'surf' => 'Accessoire',
+    'pieces' => 'Pièce détachée', 'neoprene' => 'Néoprène',
+    'windfoil' => 'Wingfoil', 'kitefoil' => 'Kitesurf'
+];
+$db_categorie = $cat_map[strtolower($categorie)] ?? $categorie;
+
+// Normalisation du Type de vente
+$type_map = [
+    'immediate' => 'Achat immédiat',
+    'Achat immédiat' => 'Achat immédiat',
+    'auction' => 'Enchère',
+    'Enchère' => 'Enchère',
+    'negotiation' => 'Achat immédiat'
+];
+$db_type_vente = $type_map[$type_vente] ?? 'Achat immédiat';
 
 // Logique métier pour la table ANNONCE
 $db_date_fin_enchere = null;
 $db_prix = (float)$prix_saisi;
-$db_accepte_nego = (int)$accepte_nego;
+$db_accepte_nego = ($type_vente === 'negotiation' || (int)$accepte_nego === 1) ? 1 : 0;
 
-if ($type_vente === 'Enchère') {
+if ($db_type_vente === 'Enchère') {
     $db_prix = 1.00;
     $db_accepte_nego = 0;
     // NOW() + 7 days
@@ -99,9 +129,9 @@ try {
         ':user_id'      => $user_id,
         ':titre'        => $titre,
         ':description'  => $description,
-        ':categorie'    => $categorie,
-        ':etat'         => $etat,
-        ':type_vente'   => $type_vente,
+        ':categorie'    => $db_categorie,
+        ':etat'         => $db_etat,
+        ':type_vente'   => $db_type_vente,
         ':accepte_nego' => $db_accepte_nego,
         ':prix'         => $db_prix,
         ':date_fin'     => $db_date_fin_enchere,
@@ -116,9 +146,9 @@ try {
         'Accessoire' => 'surf', 'Néoprène' => 'surf', 
         'Planche à voile' => 'windsurf', 'Pièce détachée' => 'surf'
     ];
-    $db_cat_legacy = $category_map[$categorie] ?? 'surf';
-    $db_cond_legacy = ($etat === 'Neuf') ? 'new' : 'used';
-    $db_sale_type_legacy = ($type_vente === 'Enchère') ? 'auction' : 'immediate';
+    $db_cat_legacy = $category_map[$db_categorie] ?? 'surf';
+    $db_cond_legacy = ($db_etat === 'Neuf') ? 'new' : 'used';
+    $db_sale_type_legacy = ($db_type_vente === 'Enchère') ? 'auction' : ($db_accepte_nego ? 'negotiation' : 'immediate');
 
     $stmt_legacy = $pdo->prepare(
         "INSERT INTO items (seller_id, name, description, category, item_condition, price, sale_type, image_url)

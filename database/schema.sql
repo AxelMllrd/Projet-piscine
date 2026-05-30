@@ -3,8 +3,11 @@
 CREATE DATABASE IF NOT EXISTS mercato_nova;
 USE mercato_nova;
 
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- Table des utilisateurs
-CREATE TABLE IF NOT EXISTS users (
+DROP TABLE IF EXISTS users;
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(50) NOT NULL,
     prenom VARCHAR(50) NOT NULL,
@@ -16,7 +19,8 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- Table des produits / articles
-CREATE TABLE IF NOT EXISTS items (
+DROP TABLE IF EXISTS items;
+CREATE TABLE items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     seller_id INT NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -32,7 +36,8 @@ CREATE TABLE IF NOT EXISTS items (
 );
 
 -- Table des enchères
-CREATE TABLE IF NOT EXISTS auctions (
+DROP TABLE IF EXISTS auctions;
+CREATE TABLE auctions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     item_id INT NOT NULL,
     starting_price DECIMAL(10, 2) NOT NULL,
@@ -45,30 +50,9 @@ CREATE TABLE IF NOT EXISTS auctions (
     FOREIGN KEY (highest_bidder_id) REFERENCES users(id)
 );
 
--- Table de l'historique des offres (Bids) - Mise à jour pour ANNONCE
-CREATE TABLE IF NOT EXISTS bids (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    ad_id INT NOT NULL,
-    user_id INT NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    bid_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ad_id) REFERENCES ANNONCE(ID) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Table des achats effectués
-CREATE TABLE IF NOT EXISTS purchases (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    ad_id INT NOT NULL,
-    buyer_id INT NOT NULL,
-    amount DECIMAL(10, 2) NOT NULL,
-    purchase_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ad_id) REFERENCES ANNONCE(ID) ON DELETE CASCADE,
-    FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
 -- Table des ANNONCES (Version mise à jour)
-CREATE TABLE IF NOT EXISTS ANNONCE (
+DROP TABLE IF EXISTS ANNONCE;
+CREATE TABLE ANNONCE (
     ID INT AUTO_INCREMENT PRIMARY KEY,
     Utilisateur_ID INT NOT NULL,
     Titre VARCHAR(255) NOT NULL,
@@ -84,9 +68,33 @@ CREATE TABLE IF NOT EXISTS ANNONCE (
     FOREIGN KEY (Utilisateur_ID) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Table de l'historique des offres (Bids)
+DROP TABLE IF EXISTS bids;
+CREATE TABLE bids (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    bid_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ad_id) REFERENCES ANNONCE(ID) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Table des achats effectués
+DROP TABLE IF EXISTS purchases;
+CREATE TABLE purchases (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad_id INT NOT NULL,
+    buyer_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    purchase_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ad_id) REFERENCES ANNONCE(ID) ON DELETE CASCADE,
+    FOREIGN KEY (buyer_id) REFERENCES users(id) ON DELETE CASCADE
+);
 
 -- Table des négociations
-CREATE TABLE IF NOT EXISTS negotiations (
+DROP TABLE IF EXISTS negotiations;
+CREATE TABLE negotiations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     item_id INT NOT NULL,
     buyer_id INT NOT NULL,
@@ -98,7 +106,8 @@ CREATE TABLE IF NOT EXISTS negotiations (
 );
 
 -- Table historique des messages de négociation
-CREATE TABLE IF NOT EXISTS negotiation_messages (
+DROP TABLE IF EXISTS negotiation_messages;
+CREATE TABLE negotiation_messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     negotiation_id INT NOT NULL,
     sender_id INT NOT NULL,
@@ -111,7 +120,8 @@ CREATE TABLE IF NOT EXISTS negotiation_messages (
 );
 
 -- Table des notifications (Version centralisée)
-CREATE TABLE IF NOT EXISTS NOTIFICATION (
+DROP TABLE IF EXISTS NOTIFICATION;
+CREATE TABLE NOTIFICATION (
     ID INT AUTO_INCREMENT PRIMARY KEY,
     Utilisateur_ID INT NOT NULL,
     Type ENUM('favori', 'offre', 'message', 'commande') NOT NULL,
@@ -121,3 +131,5 @@ CREATE TABLE IF NOT EXISTS NOTIFICATION (
     Date_Creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (Utilisateur_ID) REFERENCES users(id) ON DELETE CASCADE
 );
+
+SET FOREIGN_KEY_CHECKS = 1;
